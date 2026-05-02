@@ -54,7 +54,7 @@ body {
 }
 
 .app {
-  max-width:430px;
+  max-width:600px;
   margin:0 auto;
   min-height:100vh;
   min-height:100dvh;
@@ -70,7 +70,7 @@ body {
   left:50%;
   transform:translateX(-50%);
   width:100%;
-  max-width:430px;
+  max-width:600px;
   display:flex;
   background:rgba(14,14,14,0.92);
   backdrop-filter:blur(20px);
@@ -244,7 +244,7 @@ body {
 .ex-list-item {
   display:flex;
   align-items:center;
-  gap:12px;
+  gap:8px;
   padding:16px 16px;
   background:var(--surface);
   border:1px solid var(--border);
@@ -258,7 +258,7 @@ body {
   font-family:'Space Mono',monospace;
   font-size:18px;
   color:var(--text3);
-  width:26px;
+  width:22px;
   flex-shrink:0;
 }
 .ex-list-item .ex-name {
@@ -273,8 +273,8 @@ body {
 }
 .ex-list-item.completed { border-color:var(--accent); background:var(--accent-dim); }
 .ex-list-item.completed .ex-num { color:var(--accent); }
-.ex-list-item .info-btn {
-  width:38px; height:38px;
+.info-btn {
+  width:34px; height:38px;
   border-radius:10px;
   background:var(--surface3);
   border:1px solid var(--border);
@@ -288,7 +288,7 @@ body {
   font-size:18px;
   font-weight:700;
 }
-.ex-list-item .info-btn:active { background:var(--accent-dim); color:var(--accent); border-color:var(--accent); }
+.info-btn:active { background:var(--accent-dim); color:var(--accent); border-color:var(--accent); }
 .ex-check {
   width:28px; height:28px;
   border-radius:50%;
@@ -390,26 +390,26 @@ body {
   font-size:22px;
   font-weight:700;
   color:var(--text);
-  width:72px;
+  width:28px;
   flex-shrink:0;
   white-space:nowrap;
 }
 .set-reps {
   font-size:22px;
   color:var(--text2);
-  width:50px;
+  width:36px;
   flex-shrink:0;
-  margin-left:8px;
 }
 .set-prev {
-  font-size:24px;
+  font-size:22px;
   color:var(--text3);
-  flex:1;
+  width:50px;
+  flex-shrink:0;
   text-align:center;
 }
 .set-prev .prev-val { color:var(--text); font-weight:600; }
 .set-input {
-  width:120px;
+  flex:1;
   height:52px;
   border-radius:12px;
   border:2px solid var(--border);
@@ -421,7 +421,7 @@ body {
   text-align:center;
   outline:none;
   -webkit-appearance:none;
-  flex-shrink:0;
+  min-width:0;
 }
 .set-input:focus { border-color:var(--accent); background:var(--accent-dim); }
 .set-input::placeholder { color:var(--text3); font-size:18px; font-weight:400; }
@@ -430,7 +430,7 @@ body {
   align-items:center;
   gap:10px;
   margin-bottom:10px;
-  padding:0 16px;
+  padding:0 14px;
 }
 .set-header span {
   font-size:14px;
@@ -439,10 +439,10 @@ body {
   letter-spacing:0.5px;
   color:var(--text3);
 }
-.set-header .sh-set { width:72px; }
-.set-header .sh-reps { width:50px; }
-.set-header .sh-prev { flex:1; text-align:center; }
-.set-header .sh-weight { width:120px; text-align:center; flex-shrink:0; }
+.set-header .sh-set { width:28px; }
+.set-header .sh-reps { width:36px; }
+.set-header .sh-prev { width:50px; text-align:center; }
+.set-header .sh-weight { flex:1; text-align:center; }
 
 .ef-save-btn {
   width:100%;
@@ -494,7 +494,7 @@ body {
 .modal-overlay.active { display:flex; }
 .modal-sheet {
   width:100%;
-  max-width:430px;
+  max-width:600px;
   max-height:85vh;
   background:var(--surface);
   border-radius:var(--radius) var(--radius) 0 0;
@@ -847,7 +847,7 @@ body {
   font-family:'Space Mono',monospace;
 }
 
-@media(min-width:768px) {
+@media(min-width:601px) {
   .app { border-left:1px solid var(--border); border-right:1px solid var(--border); }
 }
 </style>
@@ -965,6 +965,23 @@ function getAllWeights(exerciseId) {
   return w.sort((a,b) => new Date(b.date) - new Date(a.date));
 }
 
+function formatSetsHtml(sets) {
+  if (!sets || sets.length === 0) return '';
+  // Cardio: first value is a machine name string
+  if (sets[0] && isNaN(sets[0]) && !sets[0].includes(':')) {
+    return '<span class="hist-entry-set">' + sets[0] + ' — ' + (sets[1]||'?') + ' min</span>';
+  }
+  // DB exercises: values contain ":"
+  if (sets[0] && sets[0].includes && sets[0].includes(':')) {
+    return sets.map((s,i) => {
+      const parts = s.split(':');
+      return '<span class="hist-entry-set">S'+(i+1)+': '+parts[0]+'L / '+parts[1]+'R</span>';
+    }).join('');
+  }
+  // Standard: just kg values
+  return sets.map((s,i) => '<span class="hist-entry-set">S'+(i+1)+': '+s+'kg</span>').join('');
+}
+
 // --- EXERCISE DATABASE ---
 const exercises = {
   // DAY 1: SQUAT
@@ -988,6 +1005,7 @@ const exercises = {
   },
   'goblet_squats': {
     name: 'Goblet Squats',
+    isDB: true,
     category: 'Squat Focus',
     desc: 'Hold a dumbbell or kettlebell at chest height and squat. Great for learning squat mechanics.',
     cues: ['Hold weight close to chest with both hands','Elbows pointing down between knees','Sit back and down, keeping chest up','Drive through heels to stand','Keep core braced throughout'],
@@ -1062,6 +1080,7 @@ const exercises = {
   // DAY 2: BENCH
   'bench_db_neutral': {
     name: 'Bench Press (DB Neutral Grip)',
+    isDB: true,
     standardName: 'Bench Press',
     isShoulder: true,
     category: 'Bench Focus',
@@ -1071,6 +1090,7 @@ const exercises = {
   },
   'larsen_db_neutral': {
     name: 'Larsen Press (DB Neutral Grip)',
+    isDB: true,
     standardName: 'Larsen Press',
     isShoulder: true,
     category: 'Bench Focus',
@@ -1080,6 +1100,7 @@ const exercises = {
   },
   'db_incline_neutral': {
     name: 'DB Incline Bench (Neutral Grip)',
+    isDB: true,
     standardName: 'Wide Grip Bench',
     isShoulder: true,
     category: 'Bench Focus',
@@ -1105,6 +1126,7 @@ const exercises = {
   },
   'scaption_raises': {
     name: 'Scaption Raises',
+    isDB: true,
     isShoulder: true,
     category: 'Bench Focus',
     desc: 'A lateral raise performed at ~30° forward of the body (in the scapular plane). Targets the medial deltoid with a more natural range of motion.',
@@ -1180,6 +1202,7 @@ const exercises = {
   },
   'single_arm_db_rows': {
     name: 'Single Arm DB Rows',
+    isDB: true,
     category: 'Deadlift Focus',
     desc: 'One-arm dumbbell row. Great for unilateral back development and core stability.',
     cues: ['One hand and knee on bench','Pull dumbbell to hip','Squeeze shoulder blade at top','Lower slowly, full stretch','Keep torso square, don\'t rotate'],
@@ -1238,6 +1261,7 @@ const exercises = {
   },
   'incline_db_neutral': {
     name: 'Incline DB Press (Neutral Grip)',
+    isDB: true,
     standardName: 'Incline Bar Press',
     isShoulder: true,
     category: 'Upper Focus',
@@ -1247,6 +1271,7 @@ const exercises = {
   },
   'db_bench_neutral': {
     name: 'DB Bench Press (Neutral Grip)',
+    isDB: true,
     category: 'Upper Focus',
     desc: 'Flat dumbbell bench with neutral grip. Shoulder-friendly alternative for the B week.',
     cues: ['Lie flat, neutral grip dumbbells','Press up keeping palms facing each other','Lower to chest level','Shoulder blades squeezed throughout','Full range of motion'],
@@ -1254,6 +1279,7 @@ const exercises = {
   },
   'scaption_raises_upper': {
     name: 'Scaption Raises',
+    isDB: true,
     standardName: 'Lateral Raises',
     isShoulder: true,
     category: 'Upper Focus',
@@ -1270,6 +1296,7 @@ const exercises = {
   },
   'tricep_kickbacks': {
     name: 'Tricep Kickbacks',
+    isDB: true,
     category: 'Upper Focus',
     desc: 'Isolation exercise for the triceps. Hinge forward, extend the arm behind you.',
     cues: ['Hinge at hips, upper arm parallel to floor','Extend forearm back until arm is straight','Squeeze tricep at full extension','Lower slowly','Keep upper arm still throughout'],
@@ -1277,6 +1304,7 @@ const exercises = {
   },
   'close_grip_db_bench': {
     name: 'Close Grip DB Bench Press',
+    isDB: true,
     category: 'Upper Focus',
     desc: 'Dumbbell bench with dumbbells close together. Emphasises triceps over chest.',
     cues: ['Lie flat, dumbbells touching above chest','Press up keeping them close together','Lower slowly, elbows close to body','Focus on tricep engagement','Full lockout at top'],
@@ -1284,6 +1312,7 @@ const exercises = {
   },
   'hammer_curls': {
     name: 'Hammer Curls',
+    isDB: true,
     category: 'Upper Focus',
     desc: 'Bicep curl with neutral grip (palms facing each other). Targets the brachialis and forearms as well.',
     cues: ['Stand with dumbbells, palms facing each other','Curl up keeping neutral grip','Don\'t swing — keep elbows pinned','Squeeze at the top','Lower controlled'],
@@ -1619,6 +1648,7 @@ function renderExerciseFullscreen() {
   const todaysSets = todaysEntry ? todaysEntry.sets : [];
 
   const isCardio = ex.isCardio;
+  const isDB = ex.isDB;
 
   // Nav: find prev/next
   let prevIdx = null, nextIdx = null;
@@ -1682,16 +1712,29 @@ function renderExerciseFullscreen() {
           <span class="sh-set">Set</span>
           <span class="sh-reps">Reps</span>
           <span class="sh-prev">Prev</span>
-          <span class="sh-weight">Today</span>
+          <span class="sh-weight">${isDB ? 'L / R' : 'Today'}</span>
         </div>
         ${Array.from({length:numSets}, (_,i) => {
           const prevW = prevSets[i] || '';
           const todayW = todaysSets[i] || '';
+          const prevDisplay = isDB && prevW ? prevW.replace(':', ' / ') : prevW;
+          if (isDB) {
+            const hasColon = todayW && todayW.includes(':');
+            const parts = hasColon ? todayW.split(':') : [todayW || '—', todayW || '—'];
+            const prevParts = prevW && prevW.includes(':') ? prevW.split(':') : null;
+            return `<div class="set-row" style="border-color:var(--accent);">
+              <div class="set-label" style="color:var(--accent)">${i+1}</div>
+              <div class="set-reps">${wd.r}</div>
+              <div class="set-prev">${prevParts ? '<span class="prev-val">'+prevParts[0]+'/'+prevParts[1]+'</span>' : '—'}</div>
+              <div style="flex:1;height:48px;border-radius:10px;background:var(--accent-dim);display:flex;align-items:center;justify-content:center;font-family:'Space Mono',monospace;font-size:22px;font-weight:700;color:var(--accent)">${parts[0]}L</div>
+              <div style="flex:1;height:48px;border-radius:10px;background:var(--accent-dim);display:flex;align-items:center;justify-content:center;font-family:'Space Mono',monospace;font-size:22px;font-weight:700;color:var(--accent)">${parts[1]}R</div>
+            </div>`;
+          }
           return `<div class="set-row" style="border-color:var(--accent);">
-            <div class="set-label">Set ${i+1}</div>
+            <div class="set-label">${i+1}</div>
             <div class="set-reps">${wd.r}</div>
-            <div class="set-prev">${prevW ? '<span class="prev-val">'+prevW+'</span>' : '—'}</div>
-            <div style="width:120px;height:52px;border-radius:12px;background:var(--accent-dim);display:flex;align-items:center;justify-content:center;font-family:'Space Mono',monospace;font-size:28px;font-weight:700;color:var(--accent);flex-shrink:0">${todayW || '—'}</div>
+            <div class="set-prev">${prevDisplay ? '<span class="prev-val">'+prevDisplay+'</span>' : '—'}</div>
+            <div style="flex:1;height:52px;border-radius:12px;background:var(--accent-dim);display:flex;align-items:center;justify-content:center;font-family:'Space Mono',monospace;font-size:28px;font-weight:700;color:var(--accent)">${todayW || '—'}</div>
           </div>`;
         }).join('')}
         <button class="ef-save-btn" data-action="editWeights" style="background:var(--surface2);border:1px solid var(--border);color:var(--text)">Edit</button>
@@ -1701,13 +1744,25 @@ function renderExerciseFullscreen() {
           <span class="sh-set">Set</span>
           <span class="sh-reps">Reps</span>
           <span class="sh-prev">Prev</span>
-          <span class="sh-weight">kg</span>
+          <span class="sh-weight">${isDB ? 'L / R' : 'kg'}</span>
         </div>
         ${Array.from({length:numSets}, (_,i) => {
           const prevW = prevSets[i] || '';
           const prefill = savedToday ? (todaysSets[i] || '') : '';
+          const prevDisplay = isDB && prevW ? prevW.replace(':', ' / ') : prevW;
+          if (isDB) {
+            const parts = prefill && prefill.includes(':') ? prefill.split(':') : ['',''];
+            const prevParts = prevW && prevW.includes(':') ? prevW.split(':') : null;
+            return `<div class="set-row">
+              <div class="set-label">${i+1}</div>
+              <div class="set-reps">${wd.r}</div>
+              <div class="set-prev">${prevParts ? '<span class="prev-val">'+prevParts[0]+'/'+prevParts[1]+'</span>' : '—'}</div>
+              <input type="number" inputmode="decimal" class="set-input db-left" data-set="${i}" data-side="L" value="${parts[0]}" placeholder="L" style="font-size:26px">
+              <input type="number" inputmode="decimal" class="set-input db-right" data-set="${i}" data-side="R" value="${parts[1]}" placeholder="R" style="font-size:26px">
+            </div>`;
+          }
           return `<div class="set-row">
-            <div class="set-label">Set ${i+1}</div>
+            <div class="set-label">${i+1}</div>
             <div class="set-reps">${wd.r}</div>
             <div class="set-prev">${prevW ? '<span class="prev-val">'+prevW+'</span>' : '—'}</div>
             <input type="number" inputmode="decimal" class="set-input" data-set="${i}" value="${prefill}" placeholder="kg">
@@ -1734,6 +1789,17 @@ let modalExId = null;
 let modalMode = null; // 'info' or 'history'
 
 function renderModal() {
+  if (modalMode === 'confirmResetAll') {
+    return `<div class="modal-overlay active" id="modal" data-action="closeModal">
+      <div class="modal-sheet" data-modal-sheet="true">
+        <div class="modal-handle"></div>
+        <div class="modal-title">Reset All Data?</div>
+        <div class="modal-desc" style="margin-top:8px">This will permanently delete all your logged weights, completed days, and week progress. This cannot be undone. Export a backup first if you want to keep your data.</div>
+        <button class="ef-save-btn" data-action="confirmResetAll" style="background:var(--red);margin-top:16px">Delete Everything</button>
+        <button class="modal-close" data-action="closeModal">Cancel</button>
+      </div>
+    </div>`;
+  }
   if (modalMode === 'confirmReset') {
     const weekNum = state.resetWeekNum;
     return `<div class="modal-overlay active" id="modal" data-action="closeModal">
@@ -1759,7 +1825,7 @@ function renderModal() {
         ${entries.length === 0 ? '<div class="empty-state"><div class="es-text">No weights logged yet</div></div>' :
           entries.map(e => `<div class="hist-entry">
             <div class="hist-entry-date">${e.date} · Week ${e.week}</div>
-            <div class="hist-entry-sets">${e.sets[0] && isNaN(e.sets[0]) ? '<span class="hist-entry-set">' + e.sets[0] + ' — ' + (e.sets[1]||'?') + ' min</span>' : e.sets.map((s,i) => '<span class="hist-entry-set">S'+(i+1)+': '+s+'kg</span>').join('')}</div>
+            <div class="hist-entry-sets">${formatSetsHtml(e.sets)}</div>
           </div>`).join('')
         }
         <button class="modal-close" data-action="closeModal">Close</button>
@@ -1885,6 +1951,10 @@ function renderHistoryPage() {
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
         Import Backup (JSON)
       </button>
+      <button class="export-btn" data-action="resetAllData" style="border-color:var(--red);color:var(--red);background:var(--red-dim)">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg>
+        Reset All Data
+      </button>
       <input type="file" id="jsonImportInput" accept=".json" style="display:none">
     </div>
     ${allEntries.length === 0 ? '<div class="empty-state"><div class="es-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" width="48" height="48"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/><line x1="2" y1="20" x2="22" y2="20"/></svg></div><div class="es-text">No weights logged yet.<br>Get lifting!</div></div>' :
@@ -1893,7 +1963,7 @@ function renderHistoryPage() {
         return `<div class="hist-entry" data-action="viewExHistory" data-exid="${e.exId}" style="cursor:pointer">
           <div class="hist-entry-date">${e.date} · Week ${e.week}</div>
           <div style="font-size:15px;font-weight:600;margin-bottom:4px">${ex?ex.name:e.exId}</div>
-          <div class="hist-entry-sets">${e.sets[0] && isNaN(e.sets[0]) ? '<span class="hist-entry-set">' + e.sets[0] + ' — ' + (e.sets[1]||'?') + ' min</span>' : e.sets.map((s,i) => '<span class="hist-entry-set">S'+(i+1)+': '+s+'kg</span>').join('')}</div>
+          <div class="hist-entry-sets">${formatSetsHtml(e.sets)}</div>
         </div>`;
       }).join('')
     }
@@ -1915,7 +1985,7 @@ function renderHistoryExercise() {
     ${entries.length === 0 ? '<div class="empty-state"><div class="es-text">No data yet</div></div>' :
       entries.map(e => `<div class="hist-entry">
         <div class="hist-entry-date">${e.date} · Week ${e.week}</div>
-        <div class="hist-entry-sets">${e.sets[0] && isNaN(e.sets[0]) ? '<span class="hist-entry-set">' + e.sets[0] + ' — ' + (e.sets[1]||'?') + ' min</span>' : e.sets.map((s,i) => '<span class="hist-entry-set">S'+(i+1)+': '+s+'kg</span>').join('')}</div>
+        <div class="hist-entry-sets">${formatSetsHtml(e.sets)}</div>
       </div>`).join('')
     }
   </div>`;
@@ -1924,13 +1994,23 @@ function renderHistoryExercise() {
 // --- CSV EXPORT ---
 function exportCSV() {
   const allWeights = getWeightLog();
-  let csv = 'Exercise,Date,Week,Set 1 (kg),Set 2 (kg),Set 3 (kg),Set 4 (kg)\n';
+  let csv = 'Exercise,Date,Week,Set 1,Set 1 L,Set 1 R,Set 2,Set 2 L,Set 2 R,Set 3,Set 3 L,Set 3 R,Set 4,Set 4 L,Set 4 R,Type\n';
   Object.entries(allWeights).forEach(([exId, entries]) => {
     const ex = exercises[exId];
     const name = ex ? ex.name : exId;
+    const type = ex && ex.isCardio ? 'cardio' : ex && ex.isDB ? 'dumbbell' : 'barbell';
     entries.sort((a,b) => new Date(a.date) - new Date(b.date)).forEach(e => {
-      const sets = [e.sets[0]||'',e.sets[1]||'',e.sets[2]||'',e.sets[3]||''];
-      csv += `"${name}",${e.date},${e.week},${sets.join(',')}\n`;
+      const cols = [];
+      for (let i = 0; i < 4; i++) {
+        const val = e.sets[i] || '';
+        if (val.includes && val.includes(':')) {
+          const parts = val.split(':');
+          cols.push('', parts[0]||'', parts[1]||'');
+        } else {
+          cols.push(val, '', '');
+        }
+      }
+      csv += `"${name}",${e.date},${e.week},${cols.join(',')},${type}\n`;
     });
   });
   const blob = new Blob([csv], {type:'text/csv'});
@@ -2069,16 +2149,27 @@ function handleAction(e) {
       break;
     }
     case 'saveWeights': {
-      const inputs = document.querySelectorAll('.set-input');
-      const sets = [];
-      inputs.forEach(inp => {
-        sets.push(inp.value || '');
-      });
-      if (sets.some(s => s !== '')) {
+      const ex = exercises[state.selectedExercise];
+      let sets = [];
+      if (ex && ex.isDB) {
+        // Collect L/R pairs
+        const lefts = document.querySelectorAll('.db-left');
+        const rights = document.querySelectorAll('.db-right');
+        lefts.forEach((inp, i) => {
+          const l = inp.value || '';
+          const r = rights[i] ? rights[i].value || '' : '';
+          sets.push(l + ':' + r);
+        });
+      } else {
+        const inputs = document.querySelectorAll('.set-input:not(.db-left):not(.db-right):not(.cardio-duration)');
+        inputs.forEach(inp => {
+          sets.push(inp.value || '');
+        });
+      }
+      if (sets.some(s => s !== '' && s !== ':')) {
         const today = new Date().toISOString().split('T')[0];
         const wc = weekConfigs[state.currentWeek];
         const wasDeload = wc.deload && !isWeekOverridden(state.currentWeek);
-        // If editing, overwrite today's entry
         if (state.editingExercise) {
           const d = loadData();
           if (d.weights && d.weights[state.selectedExercise]) {
@@ -2200,6 +2291,16 @@ function handleAction(e) {
       break;
     case 'importJSON':
       document.getElementById('jsonImportInput').click();
+      break;
+    case 'resetAllData':
+      modalExId = null;
+      modalMode = 'confirmResetAll';
+      render();
+      break;
+    case 'confirmResetAll':
+      localStorage.removeItem(STORAGE_KEY);
+      modalMode = null;
+      render();
       break;
     case 'openExFromList': {
       const exId = el.dataset.exid;
