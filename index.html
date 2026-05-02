@@ -1,0 +1,2283 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="PCYC Gym">
+<meta name="theme-color" content="#0a0a0a">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon-192.png">
+<title>PCYC Gym Tracker</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=Space+Mono:wght@400;700&display=swap');
+
+:root {
+  --bg: #0a0a0a;
+  --surface: #141414;
+  --surface2: #1c1c1c;
+  --surface3: #252525;
+  --border: #2a2a2a;
+  --text: #e8e8e8;
+  --text2: #999;
+  --text3: #666;
+  --accent: #4ade80;
+  --accent2: #22c55e;
+  --accent-dim: rgba(74,222,128,0.1);
+  --accent-dim2: rgba(74,222,128,0.2);
+  --orange: #fb923c;
+  --orange-dim: rgba(251,146,60,0.15);
+  --red: #f87171;
+  --red-dim: rgba(248,113,113,0.15);
+  --blue: #60a5fa;
+  --blue-dim: rgba(96,165,250,0.15);
+  --yellow: #facc15;
+  --radius: 16px;
+  --radius-sm: 10px;
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+* { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+*::-webkit-scrollbar { display:none; }
+* { -ms-overflow-style:none; scrollbar-width:none; }
+
+body {
+  font-family:'DM Sans',sans-serif;
+  background:var(--bg);
+  color:var(--text);
+  min-height:100vh;
+  min-height:100dvh;
+  overscroll-behavior:none;
+  -webkit-font-smoothing:antialiased;
+}
+
+.app {
+  max-width:430px;
+  margin:0 auto;
+  min-height:100vh;
+  min-height:100dvh;
+  display:flex;
+  flex-direction:column;
+  position:relative;
+}
+
+/* TAB BAR */
+.tab-bar {
+  position:fixed;
+  bottom:0;
+  left:50%;
+  transform:translateX(-50%);
+  width:100%;
+  max-width:430px;
+  display:flex;
+  background:rgba(14,14,14,0.92);
+  backdrop-filter:blur(20px);
+  -webkit-backdrop-filter:blur(20px);
+  border-top:1px solid var(--border);
+  padding:8px 4px calc(8px + var(--safe-bottom));
+  z-index:100;
+}
+.tab-btn {
+  flex:1;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  gap:3px;
+  padding:6px 2px;
+  background:none;
+  border:none;
+  color:var(--text3);
+  font-size:11px;
+  font-family:'DM Sans',sans-serif;
+  font-weight:500;
+  cursor:pointer;
+  transition:color 0.2s;
+}
+.tab-btn.active { color:var(--accent); }
+.tab-btn svg { width:24px; height:24px; }
+
+/* PAGES */
+.page {
+  display:none;
+  flex:1;
+  padding:calc(16px + var(--safe-top)) 16px calc(80px + var(--safe-bottom));
+  overflow-y:auto;
+  -webkit-overflow-scrolling:touch;
+}
+.page.active { display:flex; flex-direction:column; }
+
+/* HEADERS */
+.page-title {
+  font-size:32px;
+  font-weight:700;
+  letter-spacing:-0.5px;
+  margin-bottom:4px;
+}
+.page-sub {
+  font-size:16px;
+  color:var(--text2);
+  margin-bottom:20px;
+  line-height:1.4;
+}
+
+/* CARDS */
+.card {
+  background:var(--surface);
+  border:1px solid var(--border);
+  border-radius:var(--radius);
+  padding:16px;
+  margin-bottom:12px;
+  cursor:pointer;
+  transition:background 0.15s, transform 0.1s;
+}
+.card:active { transform:scale(0.98); background:var(--surface2); }
+.card-title { font-size:18px; font-weight:600; margin-bottom:4px; }
+.card-meta { font-size:15px; color:var(--text2); }
+
+/* WEEK CARDS */
+.week-card {
+  position:relative;
+  overflow:hidden;
+}
+.week-card .week-num {
+  font-family:'Space Mono',monospace;
+  font-size:48px;
+  font-weight:700;
+  color:var(--accent-dim2);
+  position:absolute;
+  right:16px;
+  top:50%;
+  transform:translateY(-50%);
+}
+.week-card .week-info { position:relative; z-index:1; }
+.week-card .week-label {
+  font-size:14px;
+  font-weight:600;
+  text-transform:uppercase;
+  letter-spacing:1px;
+  color:var(--accent);
+  margin-bottom:4px;
+}
+.week-card .week-title { font-size:22px; font-weight:700; margin-bottom:2px; }
+.week-card .week-detail { font-size:15px; color:var(--text2); }
+.week-card.current { border-color:var(--accent); background:var(--accent-dim); }
+.week-card.deload { border-color:var(--orange); }
+.week-card.deload .week-label { color:var(--orange); }
+.week-card.deload .week-num { color:rgba(251,146,60,0.15); }
+.set-current-btn {
+  position:absolute;
+  right:16px;
+  bottom:14px;
+  padding:6px 14px;
+  border-radius:8px;
+  border:1px solid var(--accent);
+  background:var(--accent-dim);
+  color:var(--accent);
+  font-family:'DM Sans',sans-serif;
+  font-size:13px;
+  font-weight:600;
+  cursor:pointer;
+  z-index:2;
+}
+.set-current-btn:active { background:var(--accent); color:var(--bg); }
+.reset-week-btn {
+  padding:8px 14px;
+  border-radius:8px;
+  border:1px solid var(--border);
+  background:var(--surface2);
+  color:var(--text2);
+  font-family:'DM Sans',sans-serif;
+  font-size:14px;
+  font-weight:500;
+  cursor:pointer;
+  flex-shrink:0;
+}
+.reset-week-btn:active { background:var(--red-dim); color:var(--red); border-color:var(--red); }
+
+/* Cardio options */
+.cardio-opt {
+  padding:12px 18px;
+  border-radius:var(--radius-sm);
+  border:2px solid var(--border);
+  background:var(--surface);
+  color:var(--text);
+  font-family:'DM Sans',sans-serif;
+  font-size:17px;
+  font-weight:600;
+  cursor:pointer;
+  flex:1;
+  min-width:calc(50% - 4px);
+  text-align:center;
+}
+.cardio-opt:active { border-color:var(--accent); background:var(--accent-dim); color:var(--accent); }
+.cardio-opt.selected { border-color:var(--accent); background:var(--accent-dim); color:var(--accent); }
+
+/* DAY CARDS */
+.day-card { position:relative; overflow:hidden; }
+.day-card .day-icon {
+  width:40px; height:40px;
+  border-radius:10px;
+  display:flex; align-items:center; justify-content:center;
+  font-size:18px;
+  margin-bottom:10px;
+}
+.day-card .day-icon.squat { background:var(--accent-dim); color:var(--accent); }
+.day-card .day-icon.bench { background:var(--blue-dim); color:var(--blue); }
+.day-card .day-icon.dead { background:var(--orange-dim); color:var(--orange); }
+.day-card .day-icon.upper { background:var(--red-dim); color:var(--red); }
+.day-card .day-focus { font-size:15px; color:var(--text2); margin-bottom:2px; }
+.day-card .day-name { font-size:20px; font-weight:700; }
+.day-card .day-ex-count { font-size:15px; color:var(--text3); margin-top:4px; }
+.day-card .day-progress {
+  position:absolute; right:16px; top:50%; transform:translateY(-50%);
+  font-family:'Space Mono',monospace;
+  font-size:16px; color:var(--text3);
+}
+.day-card .day-progress .done { color:var(--accent); }
+.day-card.completed-day { opacity:0.6; border-color:var(--accent); }
+.day-card.completed-day .day-focus { color:var(--accent); }
+.day-card.next-day { border-color:var(--accent); background:var(--accent-dim); }
+
+/* EXERCISE LIST (DAY VIEW) */
+.ex-list-item {
+  display:flex;
+  align-items:center;
+  gap:12px;
+  padding:16px 16px;
+  background:var(--surface);
+  border:1px solid var(--border);
+  border-radius:var(--radius-sm);
+  margin-bottom:10px;
+  cursor:pointer;
+  transition:background 0.15s, transform 0.1s;
+}
+.ex-list-item:active { transform:scale(0.98); background:var(--surface2); }
+.ex-list-item .ex-num {
+  font-family:'Space Mono',monospace;
+  font-size:18px;
+  color:var(--text3);
+  width:26px;
+  flex-shrink:0;
+}
+.ex-list-item .ex-name {
+  flex:1;
+  font-size:18px;
+  font-weight:500;
+}
+.ex-list-item .ex-sets-info {
+  font-size:16px;
+  color:var(--text3);
+  font-weight:500;
+}
+.ex-list-item.completed { border-color:var(--accent); background:var(--accent-dim); }
+.ex-list-item.completed .ex-num { color:var(--accent); }
+.ex-list-item .info-btn {
+  width:38px; height:38px;
+  border-radius:10px;
+  background:var(--surface3);
+  border:1px solid var(--border);
+  color:var(--text2);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  cursor:pointer;
+  flex-shrink:0;
+  font-family:'DM Sans',sans-serif;
+  font-size:18px;
+  font-weight:700;
+}
+.ex-list-item .info-btn:active { background:var(--accent-dim); color:var(--accent); border-color:var(--accent); }
+.ex-check {
+  width:28px; height:28px;
+  border-radius:50%;
+  border:2px solid var(--border);
+  flex-shrink:0;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+}
+.ex-list-item.completed .ex-check {
+  border-color:var(--accent);
+  background:var(--accent);
+  color:var(--bg);
+}
+
+/* FULL SCREEN EXERCISE CARD */
+.exercise-fullscreen {
+  position:fixed;
+  inset:0;
+  background:var(--bg);
+  z-index:200;
+  display:none;
+  flex-direction:column;
+  overflow-y:auto;
+  -webkit-overflow-scrolling:touch;
+}
+.exercise-fullscreen.active { display:flex; }
+.ef-header {
+  padding:calc(16px + var(--safe-top)) 16px 16px;
+  display:flex;
+  align-items:center;
+  gap:14px;
+  background:rgba(10,10,10,0.95);
+  backdrop-filter:blur(10px);
+  -webkit-backdrop-filter:blur(10px);
+  position:sticky;
+  top:0;
+  z-index:10;
+}
+.ef-back {
+  width:48px; height:48px;
+  border-radius:12px;
+  background:var(--surface2);
+  border:none;
+  color:var(--text);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  cursor:pointer;
+  flex-shrink:0;
+  font-size:24px;
+}
+.ef-header-info { flex:1; }
+.ef-header-info .ef-exnum { font-size:16px; color:var(--text3); }
+.ef-header-info .ef-exname { font-size:28px; font-weight:700; }
+.ef-body { flex:1; padding:20px 16px calc(20px + var(--safe-bottom)); }
+.ef-actions { display:flex; gap:10px; margin-bottom:14px; }
+.ef-action-btn {
+  flex:1;
+  padding:16px;
+  border-radius:var(--radius-sm);
+  border:1px solid var(--border);
+  background:var(--surface);
+  color:var(--text);
+  font-family:'DM Sans',sans-serif;
+  font-size:17px;
+  font-weight:600;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:8px;
+  cursor:pointer;
+}
+.ef-action-btn:active { background:var(--surface2); }
+.ef-action-btn svg { width:20px; height:20px; }
+
+.ef-section-title {
+  font-size:18px;
+  font-weight:700;
+  text-transform:uppercase;
+  letter-spacing:1px;
+  color:var(--text2);
+  margin-bottom:8px;
+}
+
+/* SET ROWS */
+.set-row {
+  display:flex;
+  align-items:center;
+  gap:10px;
+  margin-bottom:8px;
+  padding:10px 14px;
+  background:var(--surface);
+  border:1px solid var(--border);
+  border-radius:var(--radius);
+}
+.set-label {
+  font-family:'Space Mono',monospace;
+  font-size:22px;
+  font-weight:700;
+  color:var(--text);
+  width:72px;
+  flex-shrink:0;
+  white-space:nowrap;
+}
+.set-reps {
+  font-size:22px;
+  color:var(--text2);
+  width:50px;
+  flex-shrink:0;
+  margin-left:8px;
+}
+.set-prev {
+  font-size:24px;
+  color:var(--text3);
+  flex:1;
+  text-align:center;
+}
+.set-prev .prev-val { color:var(--text); font-weight:600; }
+.set-input {
+  width:120px;
+  height:52px;
+  border-radius:12px;
+  border:2px solid var(--border);
+  background:var(--surface2);
+  color:var(--text);
+  font-family:'Space Mono',monospace;
+  font-size:32px;
+  font-weight:700;
+  text-align:center;
+  outline:none;
+  -webkit-appearance:none;
+  flex-shrink:0;
+}
+.set-input:focus { border-color:var(--accent); background:var(--accent-dim); }
+.set-input::placeholder { color:var(--text3); font-size:18px; font-weight:400; }
+.set-header {
+  display:flex;
+  align-items:center;
+  gap:10px;
+  margin-bottom:10px;
+  padding:0 16px;
+}
+.set-header span {
+  font-size:14px;
+  font-weight:600;
+  text-transform:uppercase;
+  letter-spacing:0.5px;
+  color:var(--text3);
+}
+.set-header .sh-set { width:72px; }
+.set-header .sh-reps { width:50px; }
+.set-header .sh-prev { flex:1; text-align:center; }
+.set-header .sh-weight { width:120px; text-align:center; flex-shrink:0; }
+
+.ef-save-btn {
+  width:100%;
+  padding:18px;
+  border-radius:var(--radius);
+  border:none;
+  background:var(--accent);
+  color:var(--bg);
+  font-family:'DM Sans',sans-serif;
+  font-size:20px;
+  font-weight:700;
+  cursor:pointer;
+  margin-top:12px;
+}
+.ef-save-btn:active { background:var(--accent2); }
+
+/* NAV DOTS */
+.ef-nav {
+  display:flex;
+  justify-content:center;
+  gap:16px;
+  padding:16px 0 0;
+}
+.ef-nav-btn {
+  width:56px; height:56px;
+  border-radius:14px;
+  border:1px solid var(--border);
+  background:var(--surface);
+  color:var(--text);
+  font-size:22px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  cursor:pointer;
+}
+.ef-nav-btn:active { background:var(--surface2); }
+.ef-nav-btn:disabled { opacity:0.3; }
+
+/* MODAL */
+.modal-overlay {
+  position:fixed;
+  inset:0;
+  background:rgba(0,0,0,0.75);
+  z-index:300;
+  display:none;
+  align-items:flex-end;
+  justify-content:center;
+}
+.modal-overlay.active { display:flex; }
+.modal-sheet {
+  width:100%;
+  max-width:430px;
+  max-height:85vh;
+  background:var(--surface);
+  border-radius:var(--radius) var(--radius) 0 0;
+  padding:20px 20px calc(20px + var(--safe-bottom));
+  overflow-y:auto;
+  -webkit-overflow-scrolling:touch;
+}
+.modal-handle {
+  width:36px; height:4px;
+  background:var(--text3);
+  border-radius:2px;
+  margin:0 auto 16px;
+}
+.modal-title { font-size:24px; font-weight:700; margin-bottom:4px; }
+.modal-alt { font-size:15px; color:var(--accent); margin-bottom:12px; }
+.modal-desc { font-size:16px; color:var(--text2); line-height:1.6; margin-bottom:16px; }
+.modal-cues { margin-bottom:16px; }
+.modal-cues .cue {
+  display:flex; gap:8px; margin-bottom:8px;
+  font-size:15px; color:var(--text2); line-height:1.5;
+}
+.modal-cues .cue-dot {
+  width:6px; height:6px;
+  border-radius:50%;
+  background:var(--accent);
+  margin-top:6px;
+  flex-shrink:0;
+}
+.modal-video-btn {
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:8px;
+  width:100%;
+  padding:14px;
+  border-radius:var(--radius-sm);
+  border:none;
+  background:#ff0000;
+  color:#fff;
+  font-family:'DM Sans',sans-serif;
+  font-size:16px;
+  font-weight:600;
+  cursor:pointer;
+  text-decoration:none;
+}
+.modal-close {
+  width:100%;
+  padding:14px;
+  border-radius:var(--radius-sm);
+  border:1px solid var(--border);
+  background:var(--surface2);
+  color:var(--text);
+  font-family:'DM Sans',sans-serif;
+  font-size:16px;
+  font-weight:500;
+  cursor:pointer;
+  margin-top:10px;
+}
+
+/* BACK NAV */
+.back-row {
+  display:flex;
+  align-items:center;
+  gap:8px;
+  margin-bottom:16px;
+  cursor:pointer;
+  color:var(--accent);
+  font-size:16px;
+  font-weight:500;
+}
+.back-row svg { width:18px; height:18px; }
+
+/* PROGRAM TAB */
+.prog-section { margin-bottom:24px; }
+.prog-day-title {
+  font-size:18px;
+  font-weight:700;
+  padding:10px 14px;
+  background:var(--surface2);
+  border-radius:var(--radius-sm) var(--radius-sm) 0 0;
+  border:1px solid var(--border);
+  border-bottom:none;
+  display:flex;
+  align-items:center;
+  gap:10px;
+}
+.prog-day-title svg { width:22px; height:22px; flex-shrink:0; }
+.prog-table {
+  border:1px solid var(--border);
+  border-radius:0 0 var(--radius-sm) var(--radius-sm);
+  overflow:hidden;
+}
+.prog-row {
+  display:grid;
+  grid-template-columns:28px 1fr 44px 50px;
+  padding:10px 12px;
+  border-bottom:1px solid var(--border);
+  font-size:15px;
+  align-items:center;
+}
+.prog-row:last-child { border-bottom:none; }
+.prog-row.header {
+  background:var(--surface2);
+  font-weight:600;
+  color:var(--text3);
+  font-size:12px;
+  text-transform:uppercase;
+  letter-spacing:0.5px;
+}
+.prog-row .pr-num { color:var(--text3); font-family:'Space Mono',monospace; }
+.prog-row .pr-name { font-weight:500; }
+.prog-row .pr-alt { color:var(--accent); font-size:13px; }
+.prog-row .pr-sets, .prog-row .pr-reps { text-align:center; color:var(--text2); }
+
+/* WEEK HEADER PILLS */
+.prog-week-header {
+  display:flex;
+  gap:8px;
+  flex-wrap:wrap;
+  padding:4px 0 12px;
+}
+.prog-week-pill {
+  padding:8px 10px;
+  border-radius:20px;
+  border:1px solid var(--border);
+  background:var(--surface);
+  color:var(--text2);
+  font-size:15px;
+  font-weight:500;
+  white-space:nowrap;
+  cursor:pointer;
+  flex:1;
+  text-align:center;
+}
+.prog-week-pill.active {
+  background:var(--accent-dim);
+  border-color:var(--accent);
+  color:var(--accent);
+}
+
+/* ALL EXERCISES TAB */
+.all-ex-item {
+  display:flex;
+  align-items:center;
+  gap:12px;
+  padding:16px 16px;
+  background:var(--surface);
+  border:1px solid var(--border);
+  border-radius:var(--radius-sm);
+  margin-bottom:10px;
+  cursor:pointer;
+  transition:background 0.15s;
+}
+.all-ex-item:active { background:var(--surface2); }
+.all-ex-item .aex-name { flex:1; font-size:18px; font-weight:500; }
+.all-ex-item .aex-tag {
+  font-size:13px;
+  padding:3px 8px;
+  border-radius:6px;
+  font-weight:500;
+}
+.all-ex-item .aex-tag.shoulder { background:var(--accent-dim); color:var(--accent); }
+.all-ex-item .aex-tag.cardio { background:var(--blue-dim); color:var(--blue); }
+
+/* HISTORY TAB */
+.hist-table {
+  border:1px solid var(--border);
+  border-radius:var(--radius-sm);
+  overflow:hidden;
+  margin-bottom:16px;
+}
+.hist-row {
+  display:grid;
+  grid-template-columns:1fr 80px 70px;
+  padding:10px 12px;
+  border-bottom:1px solid var(--border);
+  font-size:15px;
+}
+.hist-row:last-child { border-bottom:none; }
+.hist-row.header {
+  background:var(--surface2);
+  font-weight:600;
+  color:var(--text3);
+  font-size:11px;
+  text-transform:uppercase;
+  letter-spacing:0.5px;
+}
+
+.export-btn {
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:8px;
+  width:100%;
+  padding:14px;
+  border-radius:var(--radius);
+  border:1px solid var(--accent);
+  background:var(--accent-dim);
+  color:var(--accent);
+  font-family:'DM Sans',sans-serif;
+  font-size:16px;
+  font-weight:600;
+  cursor:pointer;
+  margin-bottom:16px;
+}
+
+/* SEARCH */
+.search-box {
+  width:100%;
+  padding:14px 16px;
+  border-radius:var(--radius-sm);
+  border:1px solid var(--border);
+  background:var(--surface);
+  color:var(--text);
+  font-family:'DM Sans',sans-serif;
+  font-size:17px;
+  outline:none;
+  margin-bottom:16px;
+  -webkit-appearance:none;
+}
+.search-box:focus { border-color:var(--accent); }
+.search-box::placeholder { color:var(--text3); }
+
+/* CATEGORY HEADERS */
+.cat-header {
+  font-size:14px;
+  font-weight:600;
+  text-transform:uppercase;
+  letter-spacing:1px;
+  color:var(--text3);
+  padding:12px 0 8px;
+}
+
+/* MISSED DAY BANNER */
+.missed-banner {
+  background:var(--orange-dim);
+  border:1px solid var(--orange);
+  border-radius:var(--radius-sm);
+  padding:14px;
+  margin-bottom:16px;
+}
+.missed-banner .mb-title { font-size:14px; font-weight:600; color:var(--orange); margin-bottom:6px; }
+.missed-banner .mb-text { font-size:13px; color:var(--text2); margin-bottom:10px; }
+.missed-banner .mb-actions { display:flex; gap:8px; }
+.missed-banner .mb-btn {
+  flex:1;
+  padding:10px;
+  border-radius:8px;
+  border:none;
+  font-family:'DM Sans',sans-serif;
+  font-size:13px;
+  font-weight:600;
+  cursor:pointer;
+}
+.missed-banner .mb-btn.primary { background:var(--orange); color:var(--bg); }
+.missed-banner .mb-btn.secondary { background:var(--surface); color:var(--text); border:1px solid var(--border); }
+
+/* EMPTY STATE */
+.empty-state {
+  text-align:center;
+  padding:40px 20px;
+  color:var(--text3);
+}
+.empty-state .es-icon { font-size:48px; margin-bottom:12px; }
+.empty-state .es-text { font-size:16px; line-height:1.5; }
+
+/* DATE BADGE */
+.date-badge {
+  display:inline-flex;
+  align-items:center;
+  gap:6px;
+  padding:4px 10px;
+  border-radius:6px;
+  background:var(--surface2);
+  font-size:14px;
+  color:var(--text2);
+  margin-bottom:12px;
+  font-family:'Space Mono',monospace;
+}
+
+/* Smooth transitions */
+.fade-in { animation:fadeIn 0.2s ease; }
+@keyframes fadeIn { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:translateY(0)} }
+
+/* Override toggle */
+.override-toggle {
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  padding:14px 16px;
+  background:var(--orange-dim);
+  border:1px solid rgba(251,146,60,0.3);
+  border-radius:var(--radius-sm);
+  margin-bottom:16px;
+}
+.override-toggle .ot-info { flex:1; }
+.override-toggle .ot-label { font-size:16px; font-weight:600; color:var(--orange); }
+.override-toggle .ot-desc { font-size:14px; color:var(--text2); margin-top:2px; }
+.toggle-switch {
+  width:52px; height:30px;
+  background:var(--surface3);
+  border-radius:15px;
+  border:none;
+  position:relative;
+  cursor:pointer;
+  flex-shrink:0;
+  transition:background 0.2s;
+}
+.toggle-switch.on { background:var(--accent); }
+.toggle-switch::after {
+  content:'';
+  width:24px; height:24px;
+  background:#fff;
+  border-radius:50%;
+  position:absolute;
+  top:3px; left:3px;
+  transition:transform 0.2s;
+}
+.toggle-switch.on::after { transform:translateX(22px); }
+.override-active {
+  display:flex;
+  align-items:center;
+  gap:8px;
+  padding:10px 14px;
+  background:var(--accent-dim);
+  border:1px solid rgba(74,222,128,0.3);
+  border-radius:var(--radius-sm);
+  margin-bottom:16px;
+  font-size:13px;
+  color:var(--accent);
+  font-weight:500;
+}
+
+/* History exercise-level view */
+.hist-ex-title { font-size:20px; font-weight:700; margin-bottom:16px; }
+.hist-entry {
+  background:var(--surface);
+  border:1px solid var(--border);
+  border-radius:var(--radius-sm);
+  padding:14px;
+  margin-bottom:8px;
+}
+.hist-entry-date { font-size:14px; color:var(--text3); font-family:'Space Mono',monospace; margin-bottom:6px; }
+.hist-entry-sets { display:flex; gap:12px; flex-wrap:wrap; }
+.hist-entry-set {
+  padding:5px 12px;
+  background:var(--surface2);
+  border-radius:6px;
+  font-size:16px;
+  font-family:'Space Mono',monospace;
+}
+
+@media(min-width:768px) {
+  .app { border-left:1px solid var(--border); border-right:1px solid var(--border); }
+}
+</style>
+</head>
+<body>
+<div class="app" id="app"></div>
+
+<script>
+// ============================================================
+// PCYC GYM TRACKER - Full App
+// ============================================================
+
+// --- DATA ---
+const STORAGE_KEY = 'pcyc_gym_data';
+
+function loadData() {
+  try { return JSON.parse(localStorage.getItem(STORAGE_KEY)) || {}; } catch(e) { return {}; }
+}
+function saveData(data) {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+}
+function getWeightLog() {
+  const d = loadData();
+  return d.weights || {};
+}
+function getWeekOverrides() {
+  const d = loadData();
+  return d.weekOverrides || {};
+}
+function setWeekOverride(weekNum, override) {
+  const d = loadData();
+  if (!d.weekOverrides) d.weekOverrides = {};
+  d.weekOverrides[weekNum] = override;
+  saveData(d);
+}
+function isWeekOverridden(weekNum) {
+  return !!getWeekOverrides()[weekNum];
+}
+function isDeloadWeek(weekNum) {
+  return weekConfigs[weekNum] && weekConfigs[weekNum].deload && !isWeekOverridden(weekNum);
+}
+
+// Progress tracking
+function getCurrentWeek() {
+  const d = loadData();
+  return d.currentWeek || 14;
+}
+function setCurrentWeek(weekNum) {
+  const d = loadData();
+  d.currentWeek = weekNum;
+  saveData(d);
+}
+function getCompletedDays() {
+  // Returns { weekNum: { mon: true, wed: true, thu: false } }
+  const d = loadData();
+  return d.completedDays || {};
+}
+function markDayCompleted(weekNum, dayKey) {
+  const d = loadData();
+  if (!d.completedDays) d.completedDays = {};
+  if (!d.completedDays[weekNum]) d.completedDays[weekNum] = {};
+  d.completedDays[weekNum][dayKey] = true;
+  saveData(d);
+}
+function isDayCompleted(weekNum, dayKey) {
+  const cd = getCompletedDays();
+  return cd[weekNum] && cd[weekNum][dayKey];
+}
+function getNextDay(weekNum) {
+  const schedule = weekSchedule[weekNum];
+  if (!schedule) return null;
+  const dayOrder = ['mon','wed','thu'];
+  for (const dk of dayOrder) {
+    if (!isDayCompleted(weekNum, dk)) return dk;
+  }
+  return null; // all done
+}
+function isWeekCompleted(weekNum) {
+  return getNextDay(weekNum) === null;
+}
+
+// Weight saving - saves once per exercise per day, locked after save
+function saveWeights(exerciseId, weekNum, date, sets, wasDeload) {
+  const d = loadData();
+  if (!d.weights) d.weights = {};
+  if (!d.weights[exerciseId]) d.weights[exerciseId] = [];
+  // Don't allow duplicate non-reset entry for same date
+  const existing = d.weights[exerciseId].find(e => e.date === date && !e.reset);
+  if (existing) return; // already saved today, don't overwrite
+  d.weights[exerciseId].push({ week: weekNum, date, sets, deload: !!wasDeload });
+  saveData(d);
+}
+function getTodaysWeights(exerciseId) {
+  const today = new Date().toISOString().split('T')[0];
+  const w = getWeightLog()[exerciseId];
+  if (!w) return null;
+  return w.find(e => e.date === today && !e.reset) || null;
+}
+function getLastWeights(exerciseId, skipDeload, excludeToday) {
+  const w = getWeightLog()[exerciseId];
+  if (!w || w.length === 0) return null;
+  const today = new Date().toISOString().split('T')[0];
+  let entries = w.filter(e => !e.reset).sort((a,b) => new Date(b.date) - new Date(a.date));
+  if (excludeToday) {
+    entries = entries.filter(e => e.date !== today);
+  }
+  if (skipDeload) {
+    entries = entries.filter(e => !e.deload);
+  }
+  return entries.length > 0 ? entries[0] : null;
+}
+function getAllWeights(exerciseId) {
+  const w = getWeightLog()[exerciseId];
+  if (!w) return [];
+  return w.sort((a,b) => new Date(b.date) - new Date(a.date));
+}
+
+// --- EXERCISE DATABASE ---
+const exercises = {
+  // DAY 1: SQUAT
+  'zercher_squats': {
+    name: 'Zercher Squats',
+    standardName: 'Squats',
+    isShoulder: true,
+    category: 'Squat Focus',
+    desc: 'A squat variation where you hold the barbell in the crook of your elbows instead of on your back. Builds core and quad strength with a very upright torso position.',
+    cues: ['Position bar in the crook of your elbows, arms bent','Keep elbows tight to your body','Squat down keeping torso upright','Drive through heels to stand','Brace your core throughout'],
+    video: 'https://www.youtube.com/results?search_query=zercher+squat+tutorial+form'
+  },
+  'pulse_squats_zercher': {
+    name: 'Pulse Squats (Zercher)',
+    standardName: 'Pulse Squats',
+    isShoulder: true,
+    category: 'Squat Focus',
+    desc: 'Small pulsing reps at the bottom of a Zercher squat. Builds time under tension in the legs and increases quad engagement.',
+    cues: ['Set up in Zercher position','Squat to parallel','Pulse up and down ~6 inches from the bottom','Stay in the bottom half of the squat','Keep constant tension on quads and glutes'],
+    video: 'https://www.youtube.com/results?search_query=pulse+squats+tutorial'
+  },
+  'goblet_squats': {
+    name: 'Goblet Squats',
+    category: 'Squat Focus',
+    desc: 'Hold a dumbbell or kettlebell at chest height and squat. Great for learning squat mechanics.',
+    cues: ['Hold weight close to chest with both hands','Elbows pointing down between knees','Sit back and down, keeping chest up','Drive through heels to stand','Keep core braced throughout'],
+    video: 'https://www.youtube.com/results?search_query=goblet+squat+tutorial+form'
+  },
+  'rdl': {
+    name: 'RDL',
+    category: 'Squat Focus',
+    desc: 'Romanian Deadlift — a hip hinge movement targeting hamstrings and glutes. Bar stays close to legs throughout.',
+    cues: ['Hold bar at hip height, shoulder width grip','Push hips back, slight knee bend','Lower bar along thighs and shins','Feel stretch in hamstrings','Squeeze glutes to return to top'],
+    video: 'https://www.youtube.com/results?search_query=romanian+deadlift+rdl+tutorial'
+  },
+  'step_ups': {
+    name: 'Step Ups',
+    category: 'Squat Focus',
+    desc: 'Step onto an elevated platform one leg at a time. Builds single-leg strength and balance.',
+    cues: ['Place full foot on the step','Drive through the heel of the top foot','Stand tall at the top','Lower slowly and controlled','Don\'t push off with the bottom foot'],
+    video: 'https://www.youtube.com/results?search_query=step+ups+exercise+tutorial'
+  },
+  'leg_press': {
+    name: 'Leg Press',
+    category: 'Squat Focus',
+    desc: 'Machine-based compound leg exercise. Allows heavy loading without spinal compression.',
+    cues: ['Feet shoulder width on platform','Lower platform until knees are ~90 degrees','Don\'t let lower back round off the pad','Press through full foot','Don\'t lock knees at the top'],
+    video: 'https://www.youtube.com/results?search_query=leg+press+machine+tutorial'
+  },
+  'hip_thrusts': {
+    name: 'Hip Thrusts',
+    category: 'Squat Focus',
+    desc: 'Glute-focused exercise. Back against a bench, drive hips up with a barbell across your lap.',
+    cues: ['Upper back on bench, feet flat on floor','Bar across hip crease','Drive hips up by squeezing glutes','Chin slightly tucked at the top','Pause briefly at full extension'],
+    video: 'https://www.youtube.com/results?search_query=hip+thrust+tutorial+barbell'
+  },
+  'romanian_twists': {
+    name: 'Romanian Twists',
+    category: 'Squat Focus',
+    desc: 'Core rotation exercise. Sit with torso leaned back, rotate side to side with or without weight.',
+    cues: ['Sit with knees bent, lean back ~45 degrees','Lift feet off floor for more challenge','Rotate torso side to side','Touch weight to the ground each side','Keep core engaged, controlled movement'],
+    video: 'https://www.youtube.com/results?search_query=russian+twist+exercise+tutorial'
+  },
+  'cable_crunches': {
+    name: 'Cable Crunches',
+    category: 'Squat Focus',
+    desc: 'Kneeling cable crunch for weighted ab work. Allows progressive overload on core.',
+    cues: ['Kneel facing cable machine','Hold rope behind head','Crunch down, curling spine','Focus on contracting abs, not pulling with arms','Controlled return to start'],
+    video: 'https://www.youtube.com/results?search_query=cable+crunch+tutorial'
+  },
+  'seated_calf_raises': {
+    name: 'Seated Calf Raises',
+    category: 'Squat Focus',
+    desc: 'Targets the soleus muscle of the calf. Seated position isolates the lower calf.',
+    cues: ['Sit with pad across lower thighs','Balls of feet on platform edge','Lower heels as far as comfortable','Press up onto toes','Pause at the top, squeeze calves'],
+    video: 'https://www.youtube.com/results?search_query=seated+calf+raise+tutorial'
+  },
+  'single_leg_calf_raises': {
+    name: 'Single Leg Standing Calf Raises',
+    category: 'Squat Focus',
+    desc: 'Standing calf raise done one leg at a time for balanced development.',
+    cues: ['Stand on edge of step, one foot','Lower heel below step level','Press up as high as possible','Hold something for balance','Slow and controlled each rep'],
+    video: 'https://www.youtube.com/results?search_query=single+leg+calf+raise+tutorial'
+  },
+  'cardio': {
+    name: 'Cardio — 10 min',
+    category: 'Cardio',
+    isCardio: true,
+    cardioOptions: ['Elliptical', 'Bike', 'Treadmill', 'Rower'],
+    desc: '10 minutes of cardiovascular exercise to finish the session. Choose whichever machine is available.',
+    cues: ['Moderate intensity — should be able to hold a conversation','Focus on consistent pace','Good cool-down to finish the session'],
+    video: 'https://www.youtube.com/results?search_query=gym+cardio+cool+down+10+minutes'
+  },
+
+  // DAY 2: BENCH
+  'bench_db_neutral': {
+    name: 'Bench Press (DB Neutral Grip)',
+    standardName: 'Bench Press',
+    isShoulder: true,
+    category: 'Bench Focus',
+    desc: 'Dumbbell bench press with palms facing each other (neutral grip). Allows a natural arm path and strong chest activation.',
+    cues: ['Lie flat, dumbbells at chest level','Palms face each other (neutral grip)','Press up, keeping wrists over elbows','Lower slowly to chest','Shoulder blades squeezed together throughout'],
+    video: 'https://www.youtube.com/results?search_query=neutral+grip+dumbbell+bench+press+tutorial'
+  },
+  'larsen_db_neutral': {
+    name: 'Larsen Press (DB Neutral Grip)',
+    standardName: 'Larsen Press',
+    isShoulder: true,
+    category: 'Bench Focus',
+    desc: 'A bench press with legs extended straight and feet off the floor, using neutral grip dumbbells. Forces core stability and strict pressing form.',
+    cues: ['Lie flat, legs straight out, feet off ground','Neutral grip dumbbells at chest','Press up while maintaining core stability','No leg drive — pure upper body','Lower controlled'],
+    video: 'https://www.youtube.com/results?search_query=larsen+press+tutorial'
+  },
+  'db_incline_neutral': {
+    name: 'DB Incline Bench (Neutral Grip)',
+    standardName: 'Wide Grip Bench',
+    isShoulder: true,
+    category: 'Bench Focus',
+    desc: 'Incline dumbbell press with neutral grip (palms facing each other). Targets the upper chest with a natural pressing angle.',
+    cues: ['Set bench to ~30 degree incline','Neutral grip dumbbells at upper chest','Press up and slightly together','Lower slowly, elbows at ~45 degrees','Keep shoulder blades pinched back'],
+    video: 'https://www.youtube.com/results?search_query=incline+dumbbell+press+neutral+grip'
+  },
+  'seated_cable_rows': {
+    name: 'Seated Cable Rows',
+    standardName: 'Pull-ups',
+    isShoulder: true,
+    category: 'Bench Focus',
+    desc: 'Cable row from a seated position. Targets the mid-back, lats, and biceps with a controlled, fixed path of motion.',
+    cues: ['Sit with feet on platform, knees slightly bent','Pull handle to lower chest/upper belly','Squeeze shoulder blades together','Keep torso upright, don\'t lean back too far','Controlled return, feel the stretch'],
+    video: 'https://www.youtube.com/results?search_query=seated+cable+row+tutorial'
+  },
+  'barbell_rows': {
+    name: 'Barbell Rows',
+    category: 'Bench Focus',
+    desc: 'Bent over barbell row. Major back builder targeting lats, rhomboids, and rear delts.',
+    cues: ['Hinge at hips, back flat, ~45 degrees','Pull bar to lower chest','Squeeze shoulder blades at top','Lower controlled','Keep core braced, no swinging'],
+    video: 'https://www.youtube.com/results?search_query=barbell+row+tutorial+bent+over'
+  },
+  'scaption_raises': {
+    name: 'Scaption Raises',
+    isShoulder: true,
+    category: 'Bench Focus',
+    desc: 'A lateral raise performed at ~30° forward of the body (in the scapular plane). Targets the medial deltoid with a more natural range of motion.',
+    cues: ['Stand with dumbbells at sides','Raise arms at ~30 degree angle forward (not straight out)','Thumbs pointing slightly up','Raise to shoulder height','Lower slowly and controlled'],
+    video: 'https://www.youtube.com/results?search_query=scaption+raise+tutorial+shoulder'
+  },
+  'cable_crossovers_high_low': {
+    name: 'Cable Crossovers High-Low',
+    category: 'Bench Focus',
+    desc: 'Cable crossover pulling from high to low. Targets lower chest and front delts.',
+    cues: ['Set cables to highest position','Step forward, slight lean','Pull handles down and together','Squeeze chest at the bottom','Controlled return'],
+    video: 'https://www.youtube.com/results?search_query=cable+crossover+high+to+low+tutorial'
+  },
+  'face_pulls': {
+    name: 'Face Pulls',
+    category: 'Bench Focus',
+    desc: 'Cable exercise pulling rope to face level. Essential for rear delt and rotator cuff health.',
+    cues: ['Set cable at face height','Pull rope to face, elbows high','Separate the rope ends past your ears','Squeeze rear delts and external rotators','Slow eccentric back to start'],
+    video: 'https://www.youtube.com/results?search_query=face+pulls+tutorial+cable'
+  },
+  'rear_delt_flyes': {
+    name: 'Rear Delt Flyes',
+    category: 'Bench Focus',
+    desc: 'Bent over or machine reverse fly targeting the rear deltoids.',
+    cues: ['Bend at hips or use reverse fly machine','Arms slightly bent throughout','Raise arms out to sides','Squeeze shoulder blades together','Lower slowly'],
+    video: 'https://www.youtube.com/results?search_query=rear+delt+fly+tutorial'
+  },
+  'tricep_pushdowns': {
+    name: 'Tricep Pushdowns',
+    category: 'Bench Focus',
+    desc: 'Cable pushdown targeting the triceps. Elbows stay pinned at your sides.',
+    cues: ['Stand facing cable machine, rope or bar attachment','Elbows pinned to your sides throughout','Push down until arms are straight','Squeeze triceps at the bottom','Controlled return, don\'t let weight yank you up'],
+    video: 'https://www.youtube.com/results?search_query=tricep+pushdown+tutorial'
+  },
+  'jm_presses': {
+    name: 'JM Presses',
+    category: 'Bench Focus',
+    desc: 'A hybrid between a close-grip bench press and skull crusher. Targets triceps heavily.',
+    cues: ['Lie on bench, narrow grip on bar','Lower bar towards chin/upper chest area','Elbows come forward as bar descends','Press back up to lockout','Keep movement controlled and smooth'],
+    video: 'https://www.youtube.com/results?search_query=jm+press+tutorial+tricep'
+  },
+
+  // DAY 3: DEADLIFT
+  'deadlift': {
+    name: 'Deadlift',
+    category: 'Deadlift Focus',
+    desc: 'The conventional deadlift. Full body pull from the floor. One of the foundational strength movements.',
+    cues: ['Feet hip width, bar over mid-foot','Grip just outside knees','Hips back, chest up, back flat','Drive through floor, keeping bar close','Stand tall, squeeze glutes at top'],
+    video: 'https://www.youtube.com/results?search_query=deadlift+tutorial+form+beginner'
+  },
+  'trap_bar_deadlift': {
+    name: 'Trap Bar Deadlift',
+    category: 'Deadlift Focus',
+    desc: 'Deadlift using a hexagonal/trap bar. Easier on the lower back, more quad involvement.',
+    cues: ['Stand inside the trap bar','Grip the handles at your sides','Push the floor away','Keep torso more upright than conventional','Lockout by standing tall'],
+    video: 'https://www.youtube.com/results?search_query=trap+bar+deadlift+tutorial'
+  },
+  'pin_block_deadlift': {
+    name: 'Pin/Block Deadlift',
+    category: 'Deadlift Focus',
+    desc: 'Deadlift from an elevated starting position (pins or blocks). Targets the lockout portion.',
+    cues: ['Set pins/blocks at about knee height','Same set up as conventional deadlift','Pull from the elevated position','Focus on driving hips through','Great for building lockout strength'],
+    video: 'https://www.youtube.com/results?search_query=block+pull+deadlift+tutorial'
+  },
+  'lat_pulldowns_neutral': {
+    name: 'Lat Pulldowns (Neutral Grip)',
+    standardName: 'Lat Pulldowns',
+    isShoulder: true,
+    category: 'Deadlift Focus',
+    desc: 'Lat pulldown using a neutral grip (palms facing each other) attachment. Targets the lats with a strong mind-muscle connection.',
+    cues: ['Use neutral grip handle attachment','Pull handle to upper chest','Lead with elbows, squeeze lats','Lean back slightly','Controlled return, feel the stretch at top'],
+    video: 'https://www.youtube.com/results?search_query=neutral+grip+lat+pulldown+tutorial'
+  },
+  'single_arm_db_rows': {
+    name: 'Single Arm DB Rows',
+    category: 'Deadlift Focus',
+    desc: 'One-arm dumbbell row. Great for unilateral back development and core stability.',
+    cues: ['One hand and knee on bench','Pull dumbbell to hip','Squeeze shoulder blade at top','Lower slowly, full stretch','Keep torso square, don\'t rotate'],
+    video: 'https://www.youtube.com/results?search_query=single+arm+dumbbell+row+tutorial'
+  },
+  'chest_supported_rows': {
+    name: 'Chest Supported Rows',
+    category: 'Deadlift Focus',
+    desc: 'Row with chest against an incline bench. Eliminates momentum and lower back stress.',
+    cues: ['Lie chest-down on incline bench','Let arms hang with dumbbells','Row both dumbbells up to sides','Squeeze shoulder blades together','Lower slowly'],
+    video: 'https://www.youtube.com/results?search_query=chest+supported+row+tutorial'
+  },
+  'tbar_rows': {
+    name: 'T-Bar Rows',
+    category: 'Deadlift Focus',
+    desc: 'Row using a T-bar or landmine setup. Hits the mid-back and lats.',
+    cues: ['Straddle the bar, handle attachment','Hinge at hips, back flat','Pull bar to chest','Squeeze at the top','Controlled descent'],
+    video: 'https://www.youtube.com/results?search_query=t-bar+row+tutorial'
+  },
+  'bulgarian_split_squats': {
+    name: 'Bulgarian Split Squats',
+    category: 'Deadlift Focus',
+    desc: 'Single-leg squat with rear foot elevated on a bench. Excellent for leg strength and balance.',
+    cues: ['Rear foot on bench behind you','Front foot ~2 feet ahead of bench','Lower until front thigh is parallel','Drive up through front heel','Keep torso upright'],
+    video: 'https://www.youtube.com/results?search_query=bulgarian+split+squat+tutorial'
+  },
+  'pallof_press': {
+    name: 'Pallof Press',
+    category: 'Deadlift Focus',
+    desc: 'Anti-rotation core exercise using a cable. Builds core stability essential for big lifts.',
+    cues: ['Stand side-on to cable machine','Hold handle at chest','Press hands straight out','Resist the rotation pull','Hold extended for a count, return to chest'],
+    video: 'https://www.youtube.com/results?search_query=pallof+press+tutorial'
+  },
+  'back_extensions': {
+    name: 'Back Extensions',
+    category: 'Deadlift Focus',
+    desc: 'Hyperextension targeting lower back and glutes. Strengthens the posterior chain.',
+    cues: ['Position in hyperextension bench, hips at pad edge','Cross arms over chest or behind head','Lower torso toward floor','Raise back to parallel (don\'t hyperextend)','Squeeze glutes at the top'],
+    video: 'https://www.youtube.com/results?search_query=back+extension+tutorial+hyperextension'
+  },
+  'walking_lunges': {
+    name: 'Walking Lunges',
+    category: 'Deadlift Focus',
+    desc: 'Lunges performed walking forward. Builds leg strength, balance, and coordination.',
+    cues: ['Take a large step forward','Lower back knee toward ground','Front knee tracks over toes','Push off front foot to next step','Keep torso upright throughout'],
+    video: 'https://www.youtube.com/results?search_query=walking+lunge+tutorial'
+  },
+
+  // DAY 4: UPPER
+  'landmine_press': {
+    name: 'Landmine Press (Single Arm Kneeling)',
+    category: 'Upper Focus',
+    desc: 'Single arm pressing using a landmine/barbell in a corner. The kneeling position builds core stability and the arc of the press follows a natural overhead path.',
+    cues: ['Half-kneeling position, opposite knee down','Hold end of barbell at shoulder','Press up and forward following the arc','Control the descent','Keep core braced, no leaning'],
+    video: 'https://www.youtube.com/results?search_query=single+arm+kneeling+landmine+press+tutorial'
+  },
+  'incline_db_neutral': {
+    name: 'Incline DB Press (Neutral Grip)',
+    standardName: 'Incline Bar Press',
+    isShoulder: true,
+    category: 'Upper Focus',
+    desc: 'Incline dumbbell press with palms facing each other (neutral grip). Targets the upper chest with strong tricep engagement.',
+    cues: ['Bench at ~30 degree incline','Neutral grip (palms facing each other)','Press up from upper chest','Lower slowly, elbows at ~45 degrees','Shoulder blades pinched back and down'],
+    video: 'https://www.youtube.com/results?search_query=incline+dumbbell+press+neutral+grip+tutorial'
+  },
+  'db_bench_neutral': {
+    name: 'DB Bench Press (Neutral Grip)',
+    category: 'Upper Focus',
+    desc: 'Flat dumbbell bench with neutral grip. Shoulder-friendly alternative for the B week.',
+    cues: ['Lie flat, neutral grip dumbbells','Press up keeping palms facing each other','Lower to chest level','Shoulder blades squeezed throughout','Full range of motion'],
+    video: 'https://www.youtube.com/results?search_query=neutral+grip+dumbbell+bench+press'
+  },
+  'scaption_raises_upper': {
+    name: 'Scaption Raises',
+    standardName: 'Lateral Raises',
+    isShoulder: true,
+    category: 'Upper Focus',
+    desc: 'Raises performed in the scapular plane (~30° forward of lateral). Targets the medial and front deltoids with a natural movement path.',
+    cues: ['Stand with dumbbells at sides','Raise at ~30 degree angle forward','Thumbs slightly up','Shoulder height maximum','Slow and controlled descent'],
+    video: 'https://www.youtube.com/results?search_query=scaption+raise+tutorial'
+  },
+  'kb_swings': {
+    name: 'KB Swings',
+    category: 'Upper Focus',
+    desc: 'Kettlebell swing — a powerful hip hinge movement. Builds explosive posterior chain power.',
+    cues: ['Feet shoulder width, KB on floor ahead','Hike KB back between legs','Snap hips forward to swing KB up','Arms are just along for the ride','Let KB swing back, hinge at hips to repeat'],
+    video: 'https://www.youtube.com/results?search_query=kettlebell+swing+tutorial+beginner'
+  },
+  'tricep_kickbacks': {
+    name: 'Tricep Kickbacks',
+    category: 'Upper Focus',
+    desc: 'Isolation exercise for the triceps. Hinge forward, extend the arm behind you.',
+    cues: ['Hinge at hips, upper arm parallel to floor','Extend forearm back until arm is straight','Squeeze tricep at full extension','Lower slowly','Keep upper arm still throughout'],
+    video: 'https://www.youtube.com/results?search_query=tricep+kickback+tutorial'
+  },
+  'close_grip_db_bench': {
+    name: 'Close Grip DB Bench Press',
+    category: 'Upper Focus',
+    desc: 'Dumbbell bench with dumbbells close together. Emphasises triceps over chest.',
+    cues: ['Lie flat, dumbbells touching above chest','Press up keeping them close together','Lower slowly, elbows close to body','Focus on tricep engagement','Full lockout at top'],
+    video: 'https://www.youtube.com/results?search_query=close+grip+dumbbell+bench+press+tutorial'
+  },
+  'hammer_curls': {
+    name: 'Hammer Curls',
+    category: 'Upper Focus',
+    desc: 'Bicep curl with neutral grip (palms facing each other). Targets the brachialis and forearms as well.',
+    cues: ['Stand with dumbbells, palms facing each other','Curl up keeping neutral grip','Don\'t swing — keep elbows pinned','Squeeze at the top','Lower controlled'],
+    video: 'https://www.youtube.com/results?search_query=hammer+curl+tutorial'
+  },
+  'bicep_curl_machine': {
+    name: 'Bicep Curl Machine',
+    category: 'Upper Focus',
+    desc: 'Machine-based bicep curl. Good for isolating the biceps with a fixed path.',
+    cues: ['Adjust seat so elbows align with pivot','Full extension at bottom','Curl up, squeeze biceps','Lower slowly, full range','Don\'t use momentum'],
+    video: 'https://www.youtube.com/results?search_query=bicep+curl+machine+tutorial'
+  },
+  'farmer_carry': {
+    name: 'Farmer Carry',
+    category: 'Upper Focus',
+    desc: 'Walk with heavy weights in each hand. Builds grip, core stability, and overall toughness.',
+    cues: ['Pick up heavy dumbbells or farmer bars','Stand tall, shoulders back','Walk with controlled steps','Keep core braced, don\'t lean','Grip as tight as possible'],
+    video: 'https://www.youtube.com/results?search_query=farmer+carry+tutorial'
+  },
+  'suitcase_carry': {
+    name: 'Suitcase Carry (Each)',
+    category: 'Upper Focus',
+    desc: 'Like a farmer carry but with weight on one side only. Forces anti-lateral flexion of the core.',
+    cues: ['Hold heavy weight in one hand','Stand tall, don\'t lean to either side','Walk controlled for distance','Switch hands for other side','Core works hard to resist leaning'],
+    video: 'https://www.youtube.com/results?search_query=suitcase+carry+tutorial'
+  }
+};
+
+// --- PROGRAM STRUCTURE ---
+// Week types and their configurations
+const weekConfigs = {
+  14: { type:'A', pct:60, rpe:6, label:'Week 14', desc:'A Week — 60% — RPE 6' },
+  15: { type:'B', pct:65, rpe:7, label:'Week 15', desc:'B Week — 65% — RPE 7' },
+  16: { type:'A', pct:70, rpe:8, label:'Week 16', desc:'A Week — 70% — RPE 8' },
+  17: { type:'B', pct:50, rpe:0, label:'Week 17', desc:'B Week — 50% — Deload', deload:true }
+};
+
+// Day definitions: exercises with sets/reps per week type
+// For each exercise: [exerciseId_A, exerciseId_B, {weekNum: {sets, reps}}]
+const dayDefinitions = {
+  'squat': {
+    name: 'Squat Focus',
+    dayNum: 1,
+    icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2a2 2 0 100 4 2 2 0 000-4z"/><path d="M15 8H9l-3 13h2l2-7 2 7h2l2-7"/></svg>',
+    iconClass: 'squat',
+    exercises: [
+      { a:'zercher_squats', b:'zercher_squats', data:{14:{s:3,r:'10'},15:{s:3,r:'10'},16:{s:3,r:'10'},17:{s:3,r:'5'}}},
+      { a:'pulse_squats_zercher', b:'goblet_squats', data:{14:{s:3,r:'6'},15:{s:3,r:'6'},16:{s:3,r:'6'},17:{s:3,r:'3'}}},
+      { a:'rdl', b:'step_ups', data:{14:{s:3,r:'8'},15:{s:3,r:'10ea'},16:{s:3,r:'8'},17:{s:3,r:'5ea'}}},
+      { a:'leg_press', b:'hip_thrusts', data:{14:{s:3,r:'10'},15:{s:3,r:'10'},16:{s:3,r:'10'},17:{s:3,r:'5'}}},
+      { a:'romanian_twists', b:'cable_crunches', data:{14:{s:3,r:'10ea'},15:{s:3,r:'20'},16:{s:3,r:'10ea'},17:{s:3,r:'10'}}},
+      { a:'seated_calf_raises', b:'single_leg_calf_raises', data:{14:{s:3,r:'10'},15:{s:3,r:'10ea'},16:{s:3,r:'10'},17:{s:3,r:'5ea'}}},
+      { a:'cardio', b:'cardio', data:{14:{s:0,r:'10min'},15:{s:0,r:'10min'},16:{s:0,r:'10min'},17:{s:0,r:'10min'}}}
+    ]
+  },
+  'bench': {
+    name: 'Bench Focus',
+    dayNum: 2,
+    icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="10" width="3" height="4" rx="0.5"/><rect x="20" y="10" width="3" height="4" rx="0.5"/><rect x="4" y="9" width="2" height="6" rx="0.5"/><rect x="18" y="9" width="2" height="6" rx="0.5"/><line x1="6" y1="12" x2="18" y2="12"/></svg>',
+    iconClass: 'bench',
+    exercises: [
+      { a:'bench_db_neutral', b:'bench_db_neutral', data:{14:{s:3,r:'10'},15:{s:3,r:'10'},16:{s:3,r:'10'},17:{s:3,r:'5'}}},
+      { a:'larsen_db_neutral', b:'db_incline_neutral', data:{14:{s:3,r:'8'},15:{s:3,r:'6'},16:{s:3,r:'8'},17:{s:3,r:'3'}}},
+      { a:'seated_cable_rows', b:'barbell_rows', data:{14:{s:4,r:'8'},15:{s:4,r:'8'},16:{s:4,r:'8'},17:{s:4,r:'4'}}},
+      { a:'scaption_raises', b:'cable_crossovers_high_low', data:{14:{s:3,r:'10'},15:{s:3,r:'10'},16:{s:3,r:'10'},17:{s:3,r:'5'}}},
+      { a:'face_pulls', b:'rear_delt_flyes', data:{14:{s:3,r:'20'},15:{s:3,r:'20'},16:{s:3,r:'20'},17:{s:3,r:'10'}}},
+      { a:'tricep_pushdowns', b:'jm_presses', data:{14:{s:3,r:'12'},15:{s:3,r:'12'},16:{s:3,r:'12'},17:{s:3,r:'6'}}},
+      { a:'cardio', b:'cardio', data:{14:{s:0,r:'10min'},15:{s:0,r:'10min'},16:{s:0,r:'10min'},17:{s:0,r:'10min'}}}
+    ]
+  },
+  'deadlift': {
+    name: 'Deadlift Focus',
+    dayNum: 3,
+    icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 15l3-3 2 2 4-4 2 2 5-5"/><line x1="2" y1="20" x2="22" y2="20"/><rect x="4" y="14" width="3" height="6"/><rect x="10" y="10" width="3" height="10"/><rect x="16" y="6" width="3" height="14"/></svg>',
+    iconClass: 'dead',
+    exercises: [
+      { a:'deadlift', b:'deadlift', data:{14:{s:3,r:'10'},15:{s:3,r:'10'},16:{s:3,r:'10'},17:{s:3,r:'5'}}},
+      { a:'trap_bar_deadlift', b:'pin_block_deadlift', data:{14:{s:3,r:'8'},15:{s:3,r:'6'},16:{s:3,r:'8'},17:{s:3,r:'3'}}},
+      { a:'lat_pulldowns_neutral', b:'single_arm_db_rows', data:{14:{s:4,r:'10'},15:{s:4,r:'10ea'},16:{s:4,r:'10'},17:{s:4,r:'5ea'}}},
+      { a:'chest_supported_rows', b:'tbar_rows', data:{14:{s:3,r:'10'},15:{s:3,r:'10'},16:{s:3,r:'10'},17:{s:3,r:'5'}}},
+      { a:'bulgarian_split_squats', b:'pallof_press', data:{14:{s:3,r:'10ea'},15:{s:3,r:'12ea'},16:{s:3,r:'10ea'},17:{s:3,r:'6ea'}}},
+      { a:'back_extensions', b:'walking_lunges', data:{14:{s:3,r:'10'},15:{s:3,r:'10ea'},16:{s:3,r:'10'},17:{s:3,r:'5ea'}}},
+      { a:'cardio', b:'cardio', data:{14:{s:0,r:'10min'},15:{s:0,r:'10min'},16:{s:0,r:'10min'},17:{s:0,r:'10min'}}}
+    ]
+  },
+  'upper': {
+    name: 'Upper Focus',
+    dayNum: 4,
+    icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="5" r="3"/><path d="M12 8v3"/><path d="M8 11l-4 0"/><path d="M16 11l4 0"/><path d="M12 14v4"/><path d="M9 22l3-4 3 4"/></svg>',
+    iconClass: 'upper',
+    exercises: [
+      { a:'landmine_press', b:'landmine_press', data:{14:{s:3,r:'8ea'},15:{s:3,r:'8ea'},16:{s:3,r:'8ea'},17:{s:3,r:'4ea'}}},
+      { a:'incline_db_neutral', b:'db_bench_neutral', data:{14:{s:3,r:'8'},15:{s:3,r:'8'},16:{s:3,r:'8'},17:{s:3,r:'4'}}},
+      { a:'scaption_raises_upper', b:'kb_swings', data:{14:{s:3,r:'16'},15:{s:3,r:'15'},16:{s:3,r:'16'},17:{s:3,r:'8'}}},
+      { a:'tricep_kickbacks', b:'close_grip_db_bench', data:{14:{s:3,r:'10ea'},15:{s:3,r:'10'},16:{s:3,r:'10ea'},17:{s:3,r:'5'}}},
+      { a:'hammer_curls', b:'bicep_curl_machine', data:{14:{s:3,r:'12ea'},15:{s:3,r:'10'},16:{s:3,r:'12ea'},17:{s:3,r:'5'}}},
+      { a:'farmer_carry', b:'suitcase_carry', data:{14:{s:3,r:'1 lap'},15:{s:3,r:'1 lap ea'},16:{s:3,r:'1 lap'},17:{s:3,r:'1 lap ea'}}},
+      { a:'cardio', b:'cardio', data:{14:{s:0,r:'10min'},15:{s:0,r:'10min'},16:{s:0,r:'10min'},17:{s:0,r:'10min'}}}
+    ]
+  }
+};
+
+// 3-day rotation: always 2 lower + 1 upper per week
+// Lower/Upper/Lower split: Mon=Squat, Wed=Bench or Upper, Thu=Deadlift
+// Upper day alternates between Bench and Upper across weeks
+// Week 14(A): Squat-A, Bench-A, Deadlift-A
+// Week 15(B): Squat-B, Upper-B, Deadlift-B
+// Week 16(A): Squat-A, Upper-A, Deadlift-A
+// Week 17(B): Squat-B, Bench-B, Deadlift-B
+const weekSchedule = {
+  14: { mon:'squat', wed:'bench', thu:'deadlift' },
+  15: { mon:'squat', wed:'upper', thu:'deadlift' },
+  16: { mon:'squat', wed:'upper', thu:'deadlift' },
+  17: { mon:'squat', wed:'bench', thu:'deadlift' }
+};
+
+// --- APP STATE ---
+let state = {
+  activeTab: 'today',
+  currentWeek: 14,
+  selectedDay: null,
+  selectedExercise: null,
+  selectedExerciseContext: null, // {dayKey, weekNum, exerciseIndex}
+  programViewWeek: 14,
+  allExSearch: '',
+  historyExercise: null,
+  view: 'weeks',
+  resetWeekNum: null,
+  selectedCardioMachine: null // weeks, days, day
+};
+
+// --- RENDER ---
+function render() {
+  const app = document.getElementById('app');
+  app.innerHTML = `
+    ${renderPage()}
+    ${renderTabBar()}
+    ${renderExerciseFullscreen()}
+    ${renderModal()}
+  `;
+  bindEvents();
+}
+
+function renderTabBar() {
+  const tabs = [
+    { id:'today', label:'Routine', icon:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>' },
+    { id:'exercises', label:'Exercises', icon:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14.7 6.3a1 1 0 000 1.4l1.6 1.6a1 1 0 001.4 0l3.77-3.77a6 6 0 01-7.94 7.94l-6.91 6.91a2.12 2.12 0 01-3-3l6.91-6.91a6 6 0 017.94-7.94l-3.76 3.76z"/></svg>' },
+    { id:'program', label:'Program', icon:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 016.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z"/></svg>' },
+    { id:'history', label:'History', icon:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>' }
+  ];
+  return `<div class="tab-bar">${tabs.map(t =>
+    `<button class="tab-btn ${state.activeTab===t.id?'active':''}" data-tab="${t.id}">${t.icon}<span>${t.label}</span></button>`
+  ).join('')}</div>`;
+}
+
+function renderPage() {
+  switch(state.activeTab) {
+    case 'today': return renderTodayPage();
+    case 'exercises': return renderExercisesPage();
+    case 'program': return renderProgramPage();
+    case 'history': return renderHistoryPage();
+    default: return '';
+  }
+}
+
+// --- TODAY / ROUTINE PAGE ---
+function renderTodayPage() {
+  if (state.view === 'day' && state.selectedDay) return renderDayView();
+  if (state.view === 'days') return renderDaysView();
+  return renderWeeksView();
+}
+
+function renderWeeksView() {
+  // Check if all 4 weeks are completed — if so, reset
+  const allDone = [14,15,16,17].every(w => isWeekCompleted(w));
+  if (allDone) {
+    // Reset all completed days
+    const d = loadData();
+    d.completedDays = {};
+    saveData(d);
+  }
+
+  return `<div class="page active fade-in">
+    <div class="page-title">Your Program</div>
+    <div class="page-sub">Weeks 14–17 · 4-week block</div>
+    ${[14,15,16,17].map(w => {
+      const wc = weekConfigs[w];
+      const completed = isWeekCompleted(w);
+      const nextDay = getNextDay(w);
+      const dayLabels = {mon:'Monday',wed:'Wednesday',thu:'Thursday'};
+      const daysCompleted = ['mon','wed','thu'].filter(dk => isDayCompleted(w, dk)).length;
+      let statusText = '';
+      if (completed) statusText = 'Completed';
+      else if (daysCompleted > 0) statusText = daysCompleted + '/3 days done';
+      return `<div class="card week-card ${wc.deload?'deload':''} ${completed?'current':''}" data-action="selectWeek" data-week="${w}">
+        <div class="week-num">${w}</div>
+        <div class="week-info">
+          <div class="week-label">${completed?'COMPLETED · ':''}${wc.type === 'A' ? 'A Week' : 'B Week'}${wc.deload?' · DELOAD':''}</div>
+          <div class="week-title">Week ${w}</div>
+          <div class="week-detail">${wc.pct}% intensity · ${wc.deload?'Recovery':'RPE '+wc.rpe}</div>
+          ${statusText ? '<div class="week-detail" style="margin-top:4px;color:var(--accent);font-weight:600">'+statusText+'</div>' : ''}
+        </div>
+      </div>`;
+    }).join('')}
+  </div>`;
+}
+
+function renderDaysView() {
+  const w = state.currentWeek;
+  const wc = weekConfigs[w];
+  const overridden = isWeekOverridden(w);
+  const effectiveType = wc.type;
+  const rot = weekSchedule[w];
+  const days = [
+    { key:rot.mon, label:'Monday', dayKey:'mon' },
+    { key:rot.wed, label:'Wednesday', dayKey:'wed' },
+    { key:rot.thu, label:'Thursday', dayKey:'thu' }
+  ];
+  // For reps display, if deload is overridden, use the matching A/B full-rep week
+  const repWeek = (wc.deload && overridden) ? (wc.type === 'B' ? 15 : 14) : w;
+
+  const hasSomeProgress = ['mon','wed','thu'].some(dk => isDayCompleted(w, dk));
+
+  return `<div class="page active fade-in">
+    <div class="back-row" data-action="backToWeeks">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>
+      All Weeks
+    </div>
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">
+      <div class="page-title" style="margin-bottom:0">Week ${w}</div>
+      ${hasSomeProgress ? '<button class="reset-week-btn" data-action="resetWeek" data-week="'+w+'">Reset Week</button>' : ''}
+    </div>
+    <div class="page-sub">${wc.desc}</div>
+    ${wc.deload ? `
+      <div class="override-toggle">
+        <div class="ot-info">
+          <div class="ot-label">${overridden ? 'Full sets active' : 'Deload week'}</div>
+          <div class="ot-desc">${overridden ? 'Using full sets & reps instead of deload' : 'Toggle on to use full sets & reps'}</div>
+        </div>
+        <button class="toggle-switch ${overridden?'on':''}" data-action="toggleOverride" data-week="${w}"></button>
+      </div>
+    ` : ''}
+    ${(!wc.deload && overridden) ? '' : ''}
+    ${days.map(d => {
+      const dd = dayDefinitions[d.key];
+      const exList = dd.exercises.filter(e => !exercises[effectiveType==='A'?e.a:e.b].isCardio);
+      const dayDone = isDayCompleted(w, d.dayKey);
+      const nextDayKey = getNextDay(w);
+      const isNext = d.dayKey === nextDayKey;
+      const logged = exList.filter(e => {
+        const exId = effectiveType==='A' ? e.a : e.b;
+        const last = getLastWeights(exId, false, false);
+        return last && last.week === w;
+      }).length;
+      return `<div class="card day-card ${dayDone?'completed-day':''} ${isNext?'next-day':''}" data-action="selectDay" data-daykey="${d.key}" data-daylabel="${d.label}">
+        <div class="day-icon ${dd.iconClass}">${dd.icon}</div>
+        <div class="day-focus">${d.label}${dayDone?' — Done':isNext?' — Up Next':''}</div>
+        <div class="day-name">${dd.name}</div>
+        <div class="day-ex-count">${exList.length} exercises + cardio</div>
+        <div class="day-progress"><span class="${dayDone?'done':''}">${logged}/${exList.length}</span></div>
+      </div>`;
+    }).join('')}
+  </div>`;
+}
+
+function renderDayView() {
+  const w = state.currentWeek;
+  const wc = weekConfigs[w];
+  const dd = dayDefinitions[state.selectedDay];
+  const weekType = wc.type;
+  const overridden = isWeekOverridden(w);
+  const repWeek = (wc.deload && overridden) ? (wc.type === 'B' ? 15 : 14) : w;
+  // Find which dayKey this is (mon/wed/thu)
+  const rot = weekSchedule[w];
+  let thisDayKey = null;
+  if (rot.mon === state.selectedDay) thisDayKey = 'mon';
+  else if (rot.wed === state.selectedDay) thisDayKey = 'wed';
+  else if (rot.thu === state.selectedDay) thisDayKey = 'thu';
+  // Check if this specific day slot is completed
+  const dayDone = thisDayKey ? isDayCompleted(w, thisDayKey) : false;
+
+  return `<div class="page active fade-in">
+    <div class="back-row" data-action="backToDays">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>
+      Week ${w}
+    </div>
+    <div class="page-title">${dd.name}</div>
+    <div class="page-sub">${wc.desc}${overridden && wc.deload ? ' · Full sets override' : ''}</div>
+    ${dd.exercises.map((ex, i) => {
+      const exId = weekType === 'A' ? ex.a : ex.b;
+      const exData = exercises[exId];
+      const wd = ex.data[repWeek];
+      const todaySaved = !!getTodaysWeights(exId);
+      const isCardio = exData.isCardio;
+      return `<div class="ex-list-item ${todaySaved?'completed':''}" data-action="openExercise" data-exid="${exId}" data-exindex="${i}">
+        <div class="ex-check">${todaySaved?'<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>':''}</div>
+        <div class="ex-num">${i+1}</div>
+        <div class="ex-name">${exData.name}</div>
+        <div class="ex-sets-info">${isCardio ? '10 min' : wd.s+'×'+wd.r}</div>
+        <button class="info-btn" data-action="showInfo" data-exid="${exId}">?</button>
+      </div>`;
+    }).join('')}
+    ${!dayDone && thisDayKey ? `
+      <button class="ef-save-btn" data-action="markDayComplete" data-daykey="${thisDayKey}" style="margin-top:12px">Mark Day Complete</button>
+    ` : dayDone ? `
+      <div style="text-align:center;color:var(--accent);font-size:18px;font-weight:600;padding:20px 0">Day Complete</div>
+    ` : ''}
+  </div>`;
+}
+
+// --- EXERCISE FULLSCREEN ---
+function renderExerciseFullscreen() {
+  if (!state.selectedExercise) return '<div class="exercise-fullscreen"></div>';
+  const exId = state.selectedExercise;
+  const ex = exercises[exId];
+  const ctx = state.selectedExerciseContext;
+  const w = state.currentWeek;
+  const dd = ctx ? dayDefinitions[ctx.dayKey] : null;
+  const wc = weekConfigs[w];
+  const weekType = wc.type;
+  const overridden = isWeekOverridden(w);
+  const repWeek = (wc.deload && overridden) ? (wc.type === 'B' ? 15 : 14) : w;
+  const currentIsDeload = wc.deload && !overridden;
+  const exDef = dd ? dd.exercises[ctx.exerciseIndex] : null;
+  const wd = exDef ? exDef.data[repWeek] : {s:3, r:'?'};
+  const numSets = wd.s || 0;
+  // Prev weights: skip deload, exclude today so prev always shows PREVIOUS session
+  const last = getLastWeights(exId, true, true);
+  const prevSets = last ? last.sets : [];
+  // Today's saved entry (if any)
+  const todaysEntry = getTodaysWeights(exId);
+  const savedToday = !!todaysEntry;
+  const todaysSets = todaysEntry ? todaysEntry.sets : [];
+
+  const isCardio = ex.isCardio;
+
+  // Nav: find prev/next
+  let prevIdx = null, nextIdx = null;
+  if (dd && ctx) {
+    if (ctx.exerciseIndex > 0) prevIdx = ctx.exerciseIndex - 1;
+    if (ctx.exerciseIndex < dd.exercises.length - 1) nextIdx = ctx.exerciseIndex + 1;
+  }
+
+  // Intensity info
+  const rpeText = currentIsDeload ? '50% — Deload' : wc.pct + '% — RPE ' + wc.rpe + ' (' + (10 - wc.rpe) + ' reps in the tank)';
+
+  return `<div class="exercise-fullscreen ${state.selectedExercise?'active':''}">
+    <div class="ef-header">
+      <button class="ef-back" data-action="closeExercise">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>
+      </button>
+      <div class="ef-header-info">
+        <div class="ef-exnum">${ctx ? 'Exercise '+(ctx.exerciseIndex+1)+' of '+dd.exercises.length + ' · Week ' + w : ''}</div>
+        <div class="ef-exname">${ex.name}</div>
+        <div style="font-size:14px;color:var(--orange);font-weight:500;margin-top:2px">${rpeText}</div>
+      </div>
+    </div>
+    <div class="ef-body">
+      ${ex.isShoulder ? '<div style="font-size:14px;color:var(--accent);margin-bottom:12px;padding:8px 12px;background:var(--accent-dim);border-radius:8px;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="display:inline-block;vertical-align:middle;width:16px;height:16px;margin-right:4px"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><polyline points="9 12 11 14 15 10"/></svg>Shoulder-safe alternative</div>' : ''}
+      ${ex.standardName ? '<div style="font-size:14px;color:var(--text3);margin-bottom:16px;">Replaces: '+ex.standardName+'</div>' : ''}
+
+      <div class="ef-actions">
+        <button class="ef-action-btn" data-action="showInfo" data-exid="${exId}">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+          How To
+        </button>
+        <button class="ef-action-btn" data-action="showExHistory" data-exid="${exId}">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+          History
+        </button>
+      </div>
+
+      ${isCardio ? (savedToday ? `
+        <div class="ef-section-title">Saved</div>
+        <div class="set-row" style="border-color:var(--accent);flex-direction:column;align-items:flex-start;gap:8px">
+          <div style="font-size:20px;font-weight:600;color:var(--accent)">${todaysSets[0] || '—'}</div>
+          <div style="font-size:18px;color:var(--text2)">${todaysSets[1] || '—'} min</div>
+        </div>
+        <div style="text-align:center;color:var(--accent);font-size:16px;font-weight:600;padding:16px 0">Cardio saved for today</div>
+      ` : `
+        <div class="ef-section-title">Machine</div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:20px">
+          ${ex.cardioOptions.map(opt => `
+            <button class="cardio-opt" data-action="selectCardio" data-machine="${opt}">${opt}</button>
+          `).join('')}
+        </div>
+        <div class="ef-section-title">Duration (minutes)</div>
+        <div class="set-row">
+          <div class="set-label" style="width:auto">Time</div>
+          <input type="number" inputmode="numeric" class="set-input cardio-duration" value="10" placeholder="min" style="max-width:none;flex:1">
+        </div>
+        <button class="ef-save-btn" data-action="saveCardio">Save Cardio</button>
+      `) : savedToday && !state.editingExercise ? `
+        <div class="ef-section-title">Saved · ${wd.s} x ${wd.r}</div>
+        <div class="set-header">
+          <span class="sh-set">Set</span>
+          <span class="sh-reps">Reps</span>
+          <span class="sh-prev">Prev</span>
+          <span class="sh-weight">Today</span>
+        </div>
+        ${Array.from({length:numSets}, (_,i) => {
+          const prevW = prevSets[i] || '';
+          const todayW = todaysSets[i] || '';
+          return `<div class="set-row" style="border-color:var(--accent);">
+            <div class="set-label">Set ${i+1}</div>
+            <div class="set-reps">${wd.r}</div>
+            <div class="set-prev">${prevW ? '<span class="prev-val">'+prevW+'</span>' : '—'}</div>
+            <div style="width:120px;height:52px;border-radius:12px;background:var(--accent-dim);display:flex;align-items:center;justify-content:center;font-family:'Space Mono',monospace;font-size:28px;font-weight:700;color:var(--accent);flex-shrink:0">${todayW || '—'}</div>
+          </div>`;
+        }).join('')}
+        <button class="ef-save-btn" data-action="editWeights" style="background:var(--surface2);border:1px solid var(--border);color:var(--text)">Edit</button>
+      ` : `
+        <div class="ef-section-title">${savedToday ? 'Edit Sets' : 'Log Sets'} · ${wd.s} x ${wd.r}</div>
+        <div class="set-header">
+          <span class="sh-set">Set</span>
+          <span class="sh-reps">Reps</span>
+          <span class="sh-prev">Prev</span>
+          <span class="sh-weight">kg</span>
+        </div>
+        ${Array.from({length:numSets}, (_,i) => {
+          const prevW = prevSets[i] || '';
+          const prefill = savedToday ? (todaysSets[i] || '') : '';
+          return `<div class="set-row">
+            <div class="set-label">Set ${i+1}</div>
+            <div class="set-reps">${wd.r}</div>
+            <div class="set-prev">${prevW ? '<span class="prev-val">'+prevW+'</span>' : '—'}</div>
+            <input type="number" inputmode="decimal" class="set-input" data-set="${i}" value="${prefill}" placeholder="kg">
+          </div>`;
+        }).join('')}
+
+        <button class="ef-save-btn" data-action="saveWeights">Save Weights</button>
+      `}
+
+      <div class="ef-nav">
+        <button class="ef-nav-btn" data-action="prevExercise" ${prevIdx===null?'disabled':''}>
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>
+        </button>
+        <button class="ef-nav-btn" data-action="nextExercise" ${nextIdx===null?'disabled':''}>
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+        </button>
+      </div>
+    </div>
+  </div>`;
+}
+
+// --- MODAL ---
+let modalExId = null;
+let modalMode = null; // 'info' or 'history'
+
+function renderModal() {
+  if (modalMode === 'confirmReset') {
+    const weekNum = state.resetWeekNum;
+    return `<div class="modal-overlay active" id="modal" data-action="closeModal">
+      <div class="modal-sheet" data-modal-sheet="true">
+        <div class="modal-handle"></div>
+        <div class="modal-title">Reset Week ${weekNum}?</div>
+        <div class="modal-desc" style="margin-top:8px">This will clear all day completion markers for this week. Your exercise weight history will be kept.</div>
+        <button class="ef-save-btn" data-action="confirmResetWeek" style="background:var(--red);margin-top:16px">Reset Week</button>
+        <button class="modal-close" data-action="closeModal">Cancel</button>
+      </div>
+    </div>`;
+  }
+  if (!modalExId) return '<div class="modal-overlay" id="modal"></div>';
+  const ex = exercises[modalExId];
+
+  if (modalMode === 'history') {
+    const entries = getAllWeights(modalExId);
+    return `<div class="modal-overlay active" id="modal" data-action="closeModal">
+      <div class="modal-sheet" data-modal-sheet="true">
+        <div class="modal-handle"></div>
+        <div class="modal-title">${ex.name}</div>
+        <div class="modal-alt">Weight History</div>
+        ${entries.length === 0 ? '<div class="empty-state"><div class="es-text">No weights logged yet</div></div>' :
+          entries.map(e => `<div class="hist-entry">
+            <div class="hist-entry-date">${e.date} · Week ${e.week}</div>
+            <div class="hist-entry-sets">${e.sets[0] && isNaN(e.sets[0]) ? '<span class="hist-entry-set">' + e.sets[0] + ' — ' + (e.sets[1]||'?') + ' min</span>' : e.sets.map((s,i) => '<span class="hist-entry-set">S'+(i+1)+': '+s+'kg</span>').join('')}</div>
+          </div>`).join('')
+        }
+        <button class="modal-close" data-action="closeModal">Close</button>
+      </div>
+    </div>`;
+  }
+
+  return `<div class="modal-overlay active" id="modal" data-action="closeModal">
+    <div class="modal-sheet" data-modal-sheet="true">
+      <div class="modal-handle"></div>
+      <div class="modal-title">${ex.name}</div>
+      ${ex.isShoulder ? '<div class="modal-alt"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="display:inline-block;vertical-align:middle;width:14px;height:14px;margin-right:3px"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><polyline points="9 12 11 14 15 10"/></svg>Shoulder-safe alternative'+(ex.standardName?' for '+ex.standardName:'')+'</div>' : ''}
+      <div class="modal-desc">${ex.desc}</div>
+      <div class="ef-section-title">Form Cues</div>
+      <div class="modal-cues">
+        ${ex.cues.map(c => `<div class="cue"><div class="cue-dot"></div><div>${c}</div></div>`).join('')}
+      </div>
+      <a href="${ex.video}" target="_blank" rel="noopener" class="modal-video-btn">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M23.5 6.2c-.3-1-1-1.8-2-2C19.6 3.6 12 3.6 12 3.6s-7.6 0-9.5.5c-1 .3-1.8 1-2 2C0 8 0 12 0 12s0 4 .5 5.8c.3 1 1 1.8 2 2 1.9.5 9.5.5 9.5.5s7.6 0 9.5-.5c1-.3 1.8-1 2-2 .5-1.8.5-5.8.5-5.8s0-4-.5-5.8zM9.6 15.6V8.4l6.4 3.6-6.4 3.6z"/></svg>
+        Watch Video Tutorial
+      </a>
+      <button class="modal-close" data-action="closeModal">Close</button>
+    </div>
+  </div>`;
+}
+
+// --- ALL EXERCISES PAGE ---
+function renderExercisesPage() {
+  const search = state.allExSearch.toLowerCase();
+  const categories = ['Squat Focus','Bench Focus','Deadlift Focus','Upper Focus','Cardio'];
+  const filtered = Object.entries(exercises).filter(([id, ex]) =>
+    ex.name.toLowerCase().includes(search) || (ex.standardName && ex.standardName.toLowerCase().includes(search))
+  );
+
+  return `<div class="page active fade-in">
+    <div class="page-title">All Exercises</div>
+    <div class="page-sub">Tap any exercise to log weights</div>
+    <input type="text" class="search-box" placeholder="Search exercises..." value="${state.allExSearch}" data-action="searchExercises">
+    ${categories.map(cat => {
+      const catEx = filtered.filter(([id,ex]) => ex.category === cat);
+      if (catEx.length === 0) return '';
+      return `<div class="cat-header">${cat}</div>
+        ${catEx.map(([id, ex]) => `<div class="all-ex-item" data-action="openExFromList" data-exid="${id}">
+          <div class="aex-name">${ex.name}</div>
+          ${ex.isShoulder ? '<span class="aex-tag shoulder"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="width:12px;height:12px"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><polyline points="9 12 11 14 15 10"/></svg></span>' : ''}
+          ${ex.isCardio ? '<span class="aex-tag cardio">Cardio</span>' : ''}
+          <button class="info-btn" data-action="showInfo" data-exid="${id}">?</button>
+        </div>`).join('')}`;
+    }).join('')}
+  </div>`;
+}
+
+// --- PROGRAM PAGE ---
+function renderProgramPage() {
+  const w = state.programViewWeek;
+  const wc = weekConfigs[w];
+  const weekType = wc.type;
+
+  return `<div class="page active fade-in">
+    <div class="page-title">Full Program</div>
+    <div class="page-sub">Tim's complete program — all days, all exercises</div>
+    <div class="prog-week-header">
+      ${[14,15,16,17].map(wk => `<button class="prog-week-pill ${state.programViewWeek===wk?'active':''}" data-action="progWeek" data-week="${wk}">
+        Wk${wk} ${weekConfigs[wk].deload?'DL':weekConfigs[wk].type}
+      </button>`).join('')}
+    </div>
+    ${Object.entries(dayDefinitions).map(([key, dd]) => `
+      <div class="prog-section">
+        <div class="prog-day-title">${dd.icon} Day ${dd.dayNum}: ${dd.name}</div>
+        <div class="prog-table">
+          <div class="prog-row header">
+            <span class="pr-num">#</span>
+            <span class="pr-name">${weekType==='A'?'A Week':'B Week'} Exercise</span>
+            <span class="pr-sets">Sets</span>
+            <span class="pr-reps">Reps</span>
+          </div>
+          ${dd.exercises.map((ex, i) => {
+            const exId = weekType==='A' ? ex.a : ex.b;
+            const exData = exercises[exId];
+            const wd = ex.data[w];
+            return `<div class="prog-row">
+              <span class="pr-num">${i+1}</span>
+              <span>
+                <span class="pr-name">${exData.name}</span>
+                ${exData.isShoulder ? '<br><span class="pr-alt"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="display:inline-block;vertical-align:middle;width:14px;height:14px;margin-right:3px"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><polyline points="9 12 11 14 15 10"/></svg>Shoulder alt'+(exData.standardName?' for '+exData.standardName:'')+'</span>' : ''}
+              </span>
+              <span class="pr-sets">${wd.s||'—'}</span>
+              <span class="pr-reps">${wd.r}</span>
+            </div>`;
+          }).join('')}
+        </div>
+      </div>
+    `).join('')}
+  </div>`;
+}
+
+// --- HISTORY PAGE ---
+function renderHistoryPage() {
+  if (state.historyExercise) return renderHistoryExercise();
+
+  const allWeights = getWeightLog();
+  const allEntries = [];
+  Object.entries(allWeights).forEach(([exId, entries]) => {
+    entries.forEach(e => {
+      allEntries.push({ exId, ...e });
+    });
+  });
+  allEntries.sort((a,b) => new Date(b.date) - new Date(a.date));
+
+  return `<div class="page active fade-in">
+    <div class="page-title">History</div>
+    <div class="page-sub">All logged weights</div>
+    <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:16px">
+      <button class="export-btn" data-action="exportCSV">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        Export CSV (for AI analysis)
+      </button>
+      <button class="export-btn" data-action="exportJSON">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        Export Backup (JSON)
+      </button>
+      <button class="export-btn" data-action="importJSON" style="border-color:var(--blue);color:var(--blue);background:var(--blue-dim)">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+        Import Backup (JSON)
+      </button>
+      <input type="file" id="jsonImportInput" accept=".json" style="display:none">
+    </div>
+    ${allEntries.length === 0 ? '<div class="empty-state"><div class="es-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" width="48" height="48"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/><line x1="2" y1="20" x2="22" y2="20"/></svg></div><div class="es-text">No weights logged yet.<br>Get lifting!</div></div>' :
+      allEntries.map(e => {
+        const ex = exercises[e.exId];
+        return `<div class="hist-entry" data-action="viewExHistory" data-exid="${e.exId}" style="cursor:pointer">
+          <div class="hist-entry-date">${e.date} · Week ${e.week}</div>
+          <div style="font-size:15px;font-weight:600;margin-bottom:4px">${ex?ex.name:e.exId}</div>
+          <div class="hist-entry-sets">${e.sets[0] && isNaN(e.sets[0]) ? '<span class="hist-entry-set">' + e.sets[0] + ' — ' + (e.sets[1]||'?') + ' min</span>' : e.sets.map((s,i) => '<span class="hist-entry-set">S'+(i+1)+': '+s+'kg</span>').join('')}</div>
+        </div>`;
+      }).join('')
+    }
+  </div>`;
+}
+
+function renderHistoryExercise() {
+  const exId = state.historyExercise;
+  const ex = exercises[exId];
+  const entries = getAllWeights(exId);
+
+  return `<div class="page active fade-in">
+    <div class="back-row" data-action="backToHistory">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>
+      All History
+    </div>
+    <div class="page-title">${ex ? ex.name : exId}</div>
+    <div class="page-sub">All logged weights for this exercise</div>
+    ${entries.length === 0 ? '<div class="empty-state"><div class="es-text">No data yet</div></div>' :
+      entries.map(e => `<div class="hist-entry">
+        <div class="hist-entry-date">${e.date} · Week ${e.week}</div>
+        <div class="hist-entry-sets">${e.sets[0] && isNaN(e.sets[0]) ? '<span class="hist-entry-set">' + e.sets[0] + ' — ' + (e.sets[1]||'?') + ' min</span>' : e.sets.map((s,i) => '<span class="hist-entry-set">S'+(i+1)+': '+s+'kg</span>').join('')}</div>
+      </div>`).join('')
+    }
+  </div>`;
+}
+
+// --- CSV EXPORT ---
+function exportCSV() {
+  const allWeights = getWeightLog();
+  let csv = 'Exercise,Date,Week,Set 1 (kg),Set 2 (kg),Set 3 (kg),Set 4 (kg)\n';
+  Object.entries(allWeights).forEach(([exId, entries]) => {
+    const ex = exercises[exId];
+    const name = ex ? ex.name : exId;
+    entries.sort((a,b) => new Date(a.date) - new Date(b.date)).forEach(e => {
+      const sets = [e.sets[0]||'',e.sets[1]||'',e.sets[2]||'',e.sets[3]||''];
+      csv += `"${name}",${e.date},${e.week},${sets.join(',')}\n`;
+    });
+  });
+  const blob = new Blob([csv], {type:'text/csv'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'pcyc_gym_log_'+new Date().toISOString().split('T')[0]+'.csv';
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+function exportJSON() {
+  const data = loadData();
+  data._exportDate = new Date().toISOString();
+  data._appVersion = 'PCYC Gym Tracker v1';
+  const blob = new Blob([JSON.stringify(data, null, 2)], {type:'application/json'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'pcyc_gym_backup_'+new Date().toISOString().split('T')[0]+'.json';
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+function importJSON(file) {
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    try {
+      const data = JSON.parse(e.target.result);
+      if (!data.weights && !data.weekOverrides) {
+        alert('This file does not appear to be a valid PCYC Gym backup.');
+        return;
+      }
+      if (confirm('This will replace all current data with the imported backup. Continue?')) {
+        // Merge: keep existing structure, overwrite with imported
+        saveData(data);
+        render();
+        alert('Data imported successfully.');
+      }
+    } catch(err) {
+      alert('Could not read file. Make sure it is a valid JSON backup.');
+    }
+  };
+  reader.readAsText(file);
+}
+
+// --- EVENT BINDING ---
+function bindEvents() {
+  // Tab buttons (these are re-created each render so need fresh listeners)
+  document.querySelectorAll('.tab-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const newTab = btn.dataset.tab;
+      if (newTab !== 'today') {
+        // Switching to a non-routine tab — close any open exercise/modal but keep view state
+        state.selectedExercise = null;
+        state.editingExercise = false;
+      }
+      state.activeTab = newTab;
+      state.historyExercise = null;
+      modalExId = null;
+      modalMode = null;
+      render();
+    });
+  });
+  // Document-level listeners are bound once below, not here
+}
+
+function handleAction(e) {
+  const el = e.target.closest('[data-action]');
+  if (!el) return;
+  const action = el.dataset.action;
+
+  // Prevent parent action from also firing for nested buttons
+  if (action === 'showInfo' || action === 'showExHistory') {
+    e.preventDefault();
+    e.stopImmediatePropagation();
+  }
+
+  // For closeModal on the overlay, ignore if the click was inside the sheet content (not on a button)
+  if (action === 'closeModal') {
+    const sheet = e.target.closest('[data-modal-sheet]');
+    const clickedButton = e.target.closest('button, a');
+    if (sheet && !clickedButton) return; // clicked inside sheet but not on a button, ignore
+  }
+
+  switch(action) {
+    case 'selectWeek':
+      state.currentWeek = parseInt(el.dataset.week);
+      state.view = 'days';
+      render();
+      break;
+    case 'backToWeeks':
+      state.view = 'weeks';
+      state.selectedDay = null;
+      render();
+      break;
+    case 'selectDay':
+      state.selectedDay = el.dataset.daykey;
+      state.view = 'day';
+      render();
+      break;
+    case 'backToDays':
+      state.view = 'days';
+      state.selectedDay = null;
+      state.selectedExercise = null;
+      render();
+      break;
+    case 'openExercise': {
+      const exId = el.dataset.exid;
+      const idx = parseInt(el.dataset.exindex);
+      state.selectedExercise = exId;
+      state.selectedExerciseContext = { dayKey: state.selectedDay, weekNum: state.currentWeek, exerciseIndex: idx };
+      render();
+      break;
+    }
+    case 'closeExercise':
+      state.selectedExercise = null;
+      state.selectedExerciseContext = null;
+      state.editingExercise = false;
+      render();
+      break;
+    case 'prevExercise':
+    case 'nextExercise': {
+      if (!state.selectedExerciseContext) break;
+      state.editingExercise = false;
+      const ctx = state.selectedExerciseContext;
+      const dd = dayDefinitions[ctx.dayKey];
+      const wc = weekConfigs[state.currentWeek];
+      const newIdx = action === 'prevExercise' ? ctx.exerciseIndex - 1 : ctx.exerciseIndex + 1;
+      if (newIdx < 0 || newIdx >= dd.exercises.length) break;
+      const exDef = dd.exercises[newIdx];
+      const newExId = wc.type === 'A' ? exDef.a : exDef.b;
+      state.selectedExercise = newExId;
+      state.selectedExerciseContext = { ...ctx, exerciseIndex: newIdx };
+      render();
+      break;
+    }
+    case 'saveWeights': {
+      const inputs = document.querySelectorAll('.set-input');
+      const sets = [];
+      inputs.forEach(inp => {
+        sets.push(inp.value || '');
+      });
+      if (sets.some(s => s !== '')) {
+        const today = new Date().toISOString().split('T')[0];
+        const wc = weekConfigs[state.currentWeek];
+        const wasDeload = wc.deload && !isWeekOverridden(state.currentWeek);
+        // If editing, overwrite today's entry
+        if (state.editingExercise) {
+          const d = loadData();
+          if (d.weights && d.weights[state.selectedExercise]) {
+            const idx = d.weights[state.selectedExercise].findIndex(e => e.date === today && !e.reset);
+            if (idx !== -1) {
+              d.weights[state.selectedExercise][idx].sets = sets;
+              saveData(d);
+            }
+          }
+          state.editingExercise = false;
+        } else {
+          saveWeights(state.selectedExercise, state.currentWeek, today, sets, wasDeload);
+        }
+        render();
+      }
+      break;
+    }
+    case 'editWeights': {
+      state.editingExercise = true;
+      render();
+      break;
+    }
+    case 'selectCardio': {
+      state.selectedCardioMachine = el.dataset.machine;
+      document.querySelectorAll('.cardio-opt').forEach(btn => {
+        btn.classList.toggle('selected', btn.dataset.machine === state.selectedCardioMachine);
+      });
+      break;
+    }
+    case 'saveCardio': {
+      const machine = state.selectedCardioMachine;
+      if (!machine) {
+        // Flash the machine buttons to indicate selection needed
+        document.querySelectorAll('.cardio-opt').forEach(btn => {
+          btn.style.borderColor = 'var(--red)';
+          setTimeout(() => btn.style.borderColor = '', 500);
+        });
+        break;
+      }
+      const duration = document.querySelector('.cardio-duration');
+      const mins = duration ? duration.value : '10';
+      const today = new Date().toISOString().split('T')[0];
+      const wc = weekConfigs[state.currentWeek];
+      const wasDeload = wc.deload && !isWeekOverridden(state.currentWeek);
+      saveWeights(state.selectedExercise, state.currentWeek, today, [machine, mins], wasDeload);
+      state.selectedCardioMachine = null;
+      render();
+      break;
+    }
+    case 'showInfo':
+      e.stopPropagation();
+      modalExId = el.dataset.exid;
+      modalMode = 'info';
+      render();
+      break;
+    case 'showExHistory':
+      e.stopPropagation();
+      modalExId = el.dataset.exid;
+      modalMode = 'history';
+      render();
+      break;
+    case 'closeModal':
+      modalExId = null;
+      modalMode = null;
+      state.resetWeekNum = null;
+      render();
+      break;
+    case 'progWeek':
+      state.programViewWeek = parseInt(el.dataset.week);
+      render();
+      break;
+    case 'toggleOverride': {
+      const weekNum = parseInt(el.dataset.week);
+      setWeekOverride(weekNum, !isWeekOverridden(weekNum));
+      render();
+      break;
+    }
+    case 'markDayComplete': {
+      const dayKey = el.dataset.daykey;
+      markDayCompleted(state.currentWeek, dayKey);
+      render();
+      break;
+    }
+    case 'resetWeek': {
+      modalExId = null;
+      modalMode = 'confirmReset';
+      state.resetWeekNum = parseInt(el.dataset.week);
+      render();
+      break;
+    }
+    case 'confirmResetWeek': {
+      const weekNum = state.resetWeekNum;
+      const d = loadData();
+      // Clear day completion markers
+      if (d.completedDays) {
+        delete d.completedDays[weekNum];
+      }
+      // Flag all weight entries for this week as reset (keeps history but hides from active views)
+      if (d.weights) {
+        Object.keys(d.weights).forEach(exId => {
+          d.weights[exId].forEach(entry => {
+            if (entry.week === weekNum) {
+              entry.reset = true;
+            }
+          });
+        });
+      }
+      saveData(d);
+      modalMode = null;
+      state.resetWeekNum = null;
+      render();
+      break;
+    }
+    case 'exportCSV':
+      exportCSV();
+      break;
+    case 'exportJSON':
+      exportJSON();
+      break;
+    case 'importJSON':
+      document.getElementById('jsonImportInput').click();
+      break;
+    case 'openExFromList': {
+      const exId = el.dataset.exid;
+      const ex = exercises[exId];
+      if (ex.isCardio) {
+        modalExId = exId;
+        modalMode = 'info';
+      } else {
+        state.selectedExercise = exId;
+        // Find context - pick first matching day/week
+        let found = false;
+        const wc = weekConfigs[state.currentWeek];
+        for (const [dayKey, dd] of Object.entries(dayDefinitions)) {
+          dd.exercises.forEach((exDef, i) => {
+            const thisExId = wc.type === 'A' ? exDef.a : exDef.b;
+            if (thisExId === exId && !found) {
+              state.selectedExerciseContext = { dayKey, weekNum: state.currentWeek, exerciseIndex: i };
+              found = true;
+            }
+          });
+          if (found) break;
+        }
+        if (!found) {
+          // Try other week type
+          const otherType = wc.type === 'A' ? 'B' : 'A';
+          for (const [dayKey, dd] of Object.entries(dayDefinitions)) {
+            dd.exercises.forEach((exDef, i) => {
+              const thisExId = otherType === 'A' ? exDef.a : exDef.b;
+              if (thisExId === exId && !found) {
+                state.selectedExerciseContext = { dayKey, weekNum: state.currentWeek, exerciseIndex: i };
+                found = true;
+              }
+            });
+            if (found) break;
+          }
+        }
+      }
+      render();
+      break;
+    }
+    case 'viewExHistory':
+      state.historyExercise = el.dataset.exid;
+      render();
+      break;
+    case 'backToHistory':
+      state.historyExercise = null;
+      render();
+      break;
+  }
+}
+
+function handleInput(e) {
+  if (e.target.dataset.action === 'searchExercises') {
+    state.allExSearch = e.target.value;
+    // Debounced re-render of list only
+    clearTimeout(handleInput._t);
+    handleInput._t = setTimeout(() => render(), 150);
+  }
+}
+
+// --- INIT ---
+// Register service worker
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('./service-worker.js').catch(() => {});
+}
+document.addEventListener('click', handleAction);
+document.addEventListener('input', handleInput);
+render();
+
+// File import listener
+document.addEventListener('change', function(e) {
+  if (e.target && e.target.id === 'jsonImportInput') {
+    if (e.target.files.length > 0) {
+      importJSON(e.target.files[0]);
+      e.target.value = '';
+    }
+  }
+});
+</script>
+</body>
+</html>
