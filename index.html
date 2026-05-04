@@ -1344,10 +1344,14 @@ const exercises = {
 // --- PROGRAM STRUCTURE ---
 // Week types and their configurations
 const weekConfigs = {
-  14: { type:'A', pct:60, rpe:6, label:'Week 14', desc:'A Week — 60% — RPE 6' },
-  15: { type:'B', pct:65, rpe:7, label:'Week 15', desc:'B Week — 65% — RPE 7' },
-  16: { type:'A', pct:70, rpe:8, label:'Week 16', desc:'A Week — 70% — RPE 8' },
-  17: { type:'B', pct:50, rpe:0, label:'Week 17', desc:'B Week — 50% — Deload', deload:true }
+  14: { type:'A', pct:60, rpe:6, label:'Week 14', desc:'A Week — 60% — RPE 6', block:1 },
+  15: { type:'B', pct:65, rpe:7, label:'Week 15', desc:'B Week — 65% — RPE 7', block:1 },
+  16: { type:'A', pct:70, rpe:8, label:'Week 16', desc:'A Week — 70% — RPE 8', block:1 },
+  17: { type:'B', pct:50, rpe:0, label:'Week 17', desc:'B Week — 50% — Deload', deload:true, block:1 },
+  18: { type:'A', pct:60, rpe:6, label:'Week 18', desc:'A Week — 60% — RPE 6', block:2 },
+  19: { type:'B', pct:65, rpe:7, label:'Week 19', desc:'B Week — 65% — RPE 7', block:2 },
+  20: { type:'A', pct:70, rpe:8, label:'Week 20', desc:'A Week — 70% — RPE 8', block:2 },
+  21: { type:'B', pct:60, rpe:0, label:'Week 21', desc:'B Week — 60% — Deload', deload:true, block:2 }
 };
 
 // Day definitions: exercises with sets/reps per week type
@@ -1359,13 +1363,13 @@ const dayDefinitions = {
     icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2a2 2 0 100 4 2 2 0 000-4z"/><path d="M15 8H9l-3 13h2l2-7 2 7h2l2-7"/></svg>',
     iconClass: 'squat',
     exercises: [
-      { a:'zercher_squats', b:'zercher_squats', data:{14:{s:3,r:'10'},15:{s:3,r:'10'},16:{s:3,r:'10'},17:{s:3,r:'5'}}},
-      { a:'pulse_squats_zercher', b:'goblet_squats', data:{14:{s:3,r:'6'},15:{s:3,r:'6'},16:{s:3,r:'6'},17:{s:3,r:'3'}}},
-      { a:'rdl', b:'step_ups', data:{14:{s:3,r:'8'},15:{s:3,r:'10ea'},16:{s:3,r:'8'},17:{s:3,r:'5ea'}}},
-      { a:'leg_press', b:'hip_thrusts', data:{14:{s:3,r:'10'},15:{s:3,r:'10'},16:{s:3,r:'10'},17:{s:3,r:'5'}}},
-      { a:'romanian_twists', b:'cable_crunches', data:{14:{s:3,r:'10ea'},15:{s:3,r:'20'},16:{s:3,r:'10ea'},17:{s:3,r:'10'}}},
-      { a:'seated_calf_raises', b:'single_leg_calf_raises', data:{14:{s:3,r:'10'},15:{s:3,r:'10ea'},16:{s:3,r:'10'},17:{s:3,r:'5ea'}}},
-      { a:'cardio', b:'cardio', data:{14:{s:0,r:'10min'},15:{s:0,r:'10min'},16:{s:0,r:'10min'},17:{s:0,r:'10min'}}}
+      { a:'zercher_squats', b:'zercher_squats', data:{14:{s:3,r:'10'},15:{s:3,r:'10'},16:{s:3,r:'10'},17:{s:3,r:'5'},18:{s:3,r:'8'},19:{s:3,r:'8'},20:{s:3,r:'8'},21:{s:3,r:'5'}}},
+      { a:'pulse_squats_zercher', b:'goblet_squats', data:{14:{s:3,r:'6'},15:{s:3,r:'6'},16:{s:3,r:'6'},17:{s:3,r:'3'},18:{s:3,r:'6'},19:{s:3,r:'6'},20:{s:3,r:'6'},21:{s:3,r:'3'}}},
+      { a:'rdl', b:'step_ups', data:{14:{s:3,r:'8'},15:{s:3,r:'10ea'},16:{s:3,r:'8'},17:{s:3,r:'5ea'},18:{s:3,r:'8'},19:{s:3,r:'8ea'},20:{s:3,r:'8'},21:{s:3,r:'5ea'}}},
+      { a:'leg_press', b:'hip_thrusts', data:{14:{s:3,r:'10'},15:{s:3,r:'10'},16:{s:3,r:'10'},17:{s:3,r:'5'},18:{s:3,r:'8'},19:{s:3,r:'8'},20:{s:3,r:'8'},21:{s:3,r:'5'}}},
+      { a:'romanian_twists', b:'cable_crunches', data:{14:{s:3,r:'10ea'},15:{s:3,r:'20'},16:{s:3,r:'10ea'},17:{s:3,r:'10'},18:{s:3,r:'18'},19:{s:3,r:'18'},20:{s:3,r:'18'},21:{s:3,r:'10'}}},
+      { a:'seated_calf_raises', b:'single_leg_calf_raises', data:{14:{s:3,r:'10'},15:{s:3,r:'10ea'},16:{s:3,r:'10'},17:{s:3,r:'5ea'},18:{s:3,r:'8'},19:{s:3,r:'8ea'},20:{s:3,r:'8'},21:{s:3,r:'5ea'}}},
+      { a:'cardio', b:'cardio', data:{14:{s:0,r:'10min'},15:{s:0,r:'10min'},16:{s:0,r:'10min'},17:{s:0,r:'10min'},18:{s:0,r:'10min'},19:{s:0,r:'10min'},20:{s:0,r:'10min'},21:{s:0,r:'10min'}}}
     ]
   },
   'bench': {
@@ -1374,13 +1378,13 @@ const dayDefinitions = {
     icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="10" width="3" height="4" rx="0.5"/><rect x="20" y="10" width="3" height="4" rx="0.5"/><rect x="4" y="9" width="2" height="6" rx="0.5"/><rect x="18" y="9" width="2" height="6" rx="0.5"/><line x1="6" y1="12" x2="18" y2="12"/></svg>',
     iconClass: 'bench',
     exercises: [
-      { a:'bench_db_neutral', b:'bench_db_neutral', data:{14:{s:3,r:'10'},15:{s:3,r:'10'},16:{s:3,r:'10'},17:{s:3,r:'5'}}},
-      { a:'larsen_db_neutral', b:'db_incline_neutral', data:{14:{s:3,r:'8'},15:{s:3,r:'6'},16:{s:3,r:'8'},17:{s:3,r:'3'}}},
-      { a:'seated_cable_rows', b:'barbell_rows', data:{14:{s:4,r:'8'},15:{s:4,r:'8'},16:{s:4,r:'8'},17:{s:4,r:'4'}}},
-      { a:'scaption_raises', b:'cable_crossovers_high_low', data:{14:{s:3,r:'10'},15:{s:3,r:'10'},16:{s:3,r:'10'},17:{s:3,r:'5'}}},
-      { a:'face_pulls', b:'rear_delt_flyes', data:{14:{s:3,r:'20'},15:{s:3,r:'20'},16:{s:3,r:'20'},17:{s:3,r:'10'}}},
-      { a:'tricep_pushdowns', b:'jm_presses', data:{14:{s:3,r:'12'},15:{s:3,r:'12'},16:{s:3,r:'12'},17:{s:3,r:'6'}}},
-      { a:'cardio', b:'cardio', data:{14:{s:0,r:'10min'},15:{s:0,r:'10min'},16:{s:0,r:'10min'},17:{s:0,r:'10min'}}}
+      { a:'bench_db_neutral', b:'bench_db_neutral', data:{14:{s:3,r:'10'},15:{s:3,r:'10'},16:{s:3,r:'10'},17:{s:3,r:'5'},18:{s:3,r:'8'},19:{s:3,r:'8'},20:{s:3,r:'8'},21:{s:3,r:'5'}}},
+      { a:'larsen_db_neutral', b:'db_incline_neutral', data:{14:{s:3,r:'8'},15:{s:3,r:'6'},16:{s:3,r:'8'},17:{s:3,r:'3'},18:{s:3,r:'6'},19:{s:3,r:'6'},20:{s:3,r:'6'},21:{s:3,r:'3'}}},
+      { a:'seated_cable_rows', b:'barbell_rows', data:{14:{s:4,r:'8'},15:{s:4,r:'8'},16:{s:4,r:'8'},17:{s:4,r:'4'},18:{s:4,r:'6'},19:{s:4,r:'6'},20:{s:4,r:'6'},21:{s:4,r:'4'}}},
+      { a:'scaption_raises', b:'cable_crossovers_high_low', data:{14:{s:3,r:'10'},15:{s:3,r:'10'},16:{s:3,r:'10'},17:{s:3,r:'5'},18:{s:3,r:'8'},19:{s:3,r:'8'},20:{s:3,r:'8'},21:{s:3,r:'5'}}},
+      { a:'face_pulls', b:'rear_delt_flyes', data:{14:{s:3,r:'20'},15:{s:3,r:'20'},16:{s:3,r:'20'},17:{s:3,r:'10'},18:{s:3,r:'18'},19:{s:3,r:'18'},20:{s:3,r:'18'},21:{s:3,r:'10'}}},
+      { a:'tricep_pushdowns', b:'jm_presses', data:{14:{s:3,r:'12'},15:{s:3,r:'12'},16:{s:3,r:'12'},17:{s:3,r:'6'},18:{s:3,r:'10'},19:{s:3,r:'10'},20:{s:3,r:'10'},21:{s:3,r:'6'}}},
+      { a:'cardio', b:'cardio', data:{14:{s:0,r:'10min'},15:{s:0,r:'10min'},16:{s:0,r:'10min'},17:{s:0,r:'10min'},18:{s:0,r:'10min'},19:{s:0,r:'10min'},20:{s:0,r:'10min'},21:{s:0,r:'10min'}}}
     ]
   },
   'deadlift': {
@@ -1389,13 +1393,13 @@ const dayDefinitions = {
     icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 15l3-3 2 2 4-4 2 2 5-5"/><line x1="2" y1="20" x2="22" y2="20"/><rect x="4" y="14" width="3" height="6"/><rect x="10" y="10" width="3" height="10"/><rect x="16" y="6" width="3" height="14"/></svg>',
     iconClass: 'dead',
     exercises: [
-      { a:'deadlift', b:'deadlift', data:{14:{s:3,r:'10'},15:{s:3,r:'10'},16:{s:3,r:'10'},17:{s:3,r:'5'}}},
-      { a:'trap_bar_deadlift', b:'pin_block_deadlift', data:{14:{s:3,r:'8'},15:{s:3,r:'6'},16:{s:3,r:'8'},17:{s:3,r:'3'}}},
-      { a:'lat_pulldowns_neutral', b:'single_arm_db_rows', data:{14:{s:4,r:'10'},15:{s:4,r:'10ea'},16:{s:4,r:'10'},17:{s:4,r:'5ea'}}},
-      { a:'chest_supported_rows', b:'tbar_rows', data:{14:{s:3,r:'10'},15:{s:3,r:'10'},16:{s:3,r:'10'},17:{s:3,r:'5'}}},
-      { a:'bulgarian_split_squats', b:'pallof_press', data:{14:{s:3,r:'10ea'},15:{s:3,r:'12ea'},16:{s:3,r:'10ea'},17:{s:3,r:'6ea'}}},
-      { a:'back_extensions', b:'walking_lunges', data:{14:{s:3,r:'10'},15:{s:3,r:'10ea'},16:{s:3,r:'10'},17:{s:3,r:'5ea'}}},
-      { a:'cardio', b:'cardio', data:{14:{s:0,r:'10min'},15:{s:0,r:'10min'},16:{s:0,r:'10min'},17:{s:0,r:'10min'}}}
+      { a:'deadlift', b:'deadlift', data:{14:{s:3,r:'10'},15:{s:3,r:'10'},16:{s:3,r:'10'},17:{s:3,r:'5'},18:{s:3,r:'8'},19:{s:3,r:'8'},20:{s:3,r:'8'},21:{s:3,r:'5'}}},
+      { a:'trap_bar_deadlift', b:'pin_block_deadlift', data:{14:{s:3,r:'8'},15:{s:3,r:'6'},16:{s:3,r:'8'},17:{s:3,r:'3'},18:{s:3,r:'6'},19:{s:3,r:'6'},20:{s:3,r:'6'},21:{s:3,r:'3'}}},
+      { a:'lat_pulldowns_neutral', b:'single_arm_db_rows', data:{14:{s:4,r:'10'},15:{s:4,r:'10ea'},16:{s:4,r:'10'},17:{s:4,r:'5ea'},18:{s:4,r:'8'},19:{s:4,r:'8ea'},20:{s:4,r:'8'},21:{s:4,r:'5ea'}}},
+      { a:'chest_supported_rows', b:'tbar_rows', data:{14:{s:3,r:'10'},15:{s:3,r:'10'},16:{s:3,r:'10'},17:{s:3,r:'5'},18:{s:3,r:'8'},19:{s:3,r:'8'},20:{s:3,r:'8'},21:{s:3,r:'5'}}},
+      { a:'bulgarian_split_squats', b:'pallof_press', data:{14:{s:3,r:'10ea'},15:{s:3,r:'12ea'},16:{s:3,r:'10ea'},17:{s:3,r:'6ea'},18:{s:3,r:'8ea'},19:{s:3,r:'10ea'},20:{s:3,r:'8ea'},21:{s:3,r:'6ea'}}},
+      { a:'back_extensions', b:'walking_lunges', data:{14:{s:3,r:'10'},15:{s:3,r:'10ea'},16:{s:3,r:'10'},17:{s:3,r:'5ea'},18:{s:3,r:'8'},19:{s:3,r:'8ea'},20:{s:3,r:'8'},21:{s:3,r:'5ea'}}},
+      { a:'cardio', b:'cardio', data:{14:{s:0,r:'10min'},15:{s:0,r:'10min'},16:{s:0,r:'10min'},17:{s:0,r:'10min'},18:{s:0,r:'10min'},19:{s:0,r:'10min'},20:{s:0,r:'10min'},21:{s:0,r:'10min'}}}
     ]
   },
   'upper': {
@@ -1404,13 +1408,13 @@ const dayDefinitions = {
     icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="5" r="3"/><path d="M12 8v3"/><path d="M8 11l-4 0"/><path d="M16 11l4 0"/><path d="M12 14v4"/><path d="M9 22l3-4 3 4"/></svg>',
     iconClass: 'upper',
     exercises: [
-      { a:'landmine_press', b:'landmine_press', data:{14:{s:3,r:'8ea'},15:{s:3,r:'8ea'},16:{s:3,r:'8ea'},17:{s:3,r:'4ea'}}},
-      { a:'incline_db_neutral', b:'db_bench_neutral', data:{14:{s:3,r:'8'},15:{s:3,r:'8'},16:{s:3,r:'8'},17:{s:3,r:'4'}}},
-      { a:'scaption_raises_upper', b:'kb_swings', data:{14:{s:3,r:'16'},15:{s:3,r:'15'},16:{s:3,r:'16'},17:{s:3,r:'8'}}},
-      { a:'tricep_kickbacks', b:'close_grip_db_bench', data:{14:{s:3,r:'10ea'},15:{s:3,r:'10'},16:{s:3,r:'10ea'},17:{s:3,r:'5'}}},
-      { a:'hammer_curls', b:'bicep_curl_machine', data:{14:{s:3,r:'12ea'},15:{s:3,r:'10'},16:{s:3,r:'12ea'},17:{s:3,r:'5'}}},
-      { a:'farmer_carry', b:'suitcase_carry', data:{14:{s:3,r:'1 lap'},15:{s:3,r:'1 lap ea'},16:{s:3,r:'1 lap'},17:{s:3,r:'1 lap ea'}}},
-      { a:'cardio', b:'cardio', data:{14:{s:0,r:'10min'},15:{s:0,r:'10min'},16:{s:0,r:'10min'},17:{s:0,r:'10min'}}}
+      { a:'landmine_press', b:'landmine_press', data:{14:{s:3,r:'8ea'},15:{s:3,r:'8ea'},16:{s:3,r:'8ea'},17:{s:3,r:'4ea'},18:{s:3,r:'7ea'},19:{s:3,r:'7ea'},20:{s:3,r:'7ea'},21:{s:3,r:'4ea'}}},
+      { a:'incline_db_neutral', b:'db_bench_neutral', data:{14:{s:3,r:'8'},15:{s:3,r:'8'},16:{s:3,r:'8'},17:{s:3,r:'4'},18:{s:3,r:'7'},19:{s:3,r:'7'},20:{s:3,r:'7'},21:{s:3,r:'4'}}},
+      { a:'scaption_raises_upper', b:'kb_swings', data:{14:{s:3,r:'16'},15:{s:3,r:'15'},16:{s:3,r:'16'},17:{s:3,r:'8'},18:{s:3,r:'14'},19:{s:3,r:'13'},20:{s:3,r:'14'},21:{s:3,r:'8'}}},
+      { a:'tricep_kickbacks', b:'close_grip_db_bench', data:{14:{s:3,r:'10ea'},15:{s:3,r:'10'},16:{s:3,r:'10ea'},17:{s:3,r:'5'},18:{s:3,r:'8ea'},19:{s:3,r:'8'},20:{s:3,r:'8ea'},21:{s:3,r:'5'}}},
+      { a:'hammer_curls', b:'bicep_curl_machine', data:{14:{s:3,r:'12ea'},15:{s:3,r:'10'},16:{s:3,r:'12ea'},17:{s:3,r:'5'},18:{s:3,r:'10ea'},19:{s:3,r:'8'},20:{s:3,r:'10ea'},21:{s:3,r:'5'}}},
+      { a:'farmer_carry', b:'suitcase_carry', data:{14:{s:3,r:'1 lap'},15:{s:3,r:'1 lap ea'},16:{s:3,r:'1 lap'},17:{s:3,r:'1 lap ea'},18:{s:3,r:'1 lap'},19:{s:3,r:'1 lap ea'},20:{s:3,r:'1 lap'},21:{s:3,r:'1 lap ea'}}},
+      { a:'cardio', b:'cardio', data:{14:{s:0,r:'10min'},15:{s:0,r:'10min'},16:{s:0,r:'10min'},17:{s:0,r:'10min'},18:{s:0,r:'10min'},19:{s:0,r:'10min'},20:{s:0,r:'10min'},21:{s:0,r:'10min'}}}
     ]
   }
 };
@@ -1426,7 +1430,11 @@ const weekSchedule = {
   14: { mon:'squat', wed:'bench', thu:'deadlift' },
   15: { mon:'squat', wed:'upper', thu:'deadlift' },
   16: { mon:'squat', wed:'upper', thu:'deadlift' },
-  17: { mon:'squat', wed:'bench', thu:'deadlift' }
+  17: { mon:'squat', wed:'bench', thu:'deadlift' },
+  18: { mon:'squat', wed:'bench', thu:'deadlift' },
+  19: { mon:'squat', wed:'upper', thu:'deadlift' },
+  20: { mon:'squat', wed:'upper', thu:'deadlift' },
+  21: { mon:'squat', wed:'bench', thu:'deadlift' }
 };
 
 // --- APP STATE ---
@@ -1486,19 +1494,25 @@ function renderTodayPage() {
 }
 
 function renderWeeksView() {
-  // Check if all 4 weeks are completed — if so, reset
-  const allDone = [14,15,16,17].every(w => isWeekCompleted(w));
-  if (allDone) {
-    // Reset all completed days
-    const d = loadData();
-    d.completedDays = {};
-    saveData(d);
-  }
+  // Check per block — if all weeks in a block are done, reset that block
+  const blocks = {};
+  Object.entries(weekConfigs).forEach(([w, wc]) => {
+    if (!blocks[wc.block]) blocks[wc.block] = [];
+    blocks[wc.block].push(Number(w));
+  });
+  Object.values(blocks).forEach(weekNums => {
+    if (weekNums.every(w => isWeekCompleted(w))) {
+      const d = loadData();
+      if (!d.completedDays) d.completedDays = {};
+      weekNums.forEach(w => delete d.completedDays[w]);
+      saveData(d);
+    }
+  });
 
   return `<div class="page active fade-in">
     <div class="page-title">Your Program</div>
-    <div class="page-sub">Weeks 14–17 · 4-week block</div>
-    ${[14,15,16,17].map(w => {
+    <div class="page-sub">Weeks 14–21 · 2 training blocks</div>
+    ${Object.keys(weekConfigs).map(Number).map((w, i, arr) => {
       const wc = weekConfigs[w];
       const completed = isWeekCompleted(w);
       const nextDay = getNextDay(w);
@@ -1507,7 +1521,10 @@ function renderWeeksView() {
       let statusText = '';
       if (completed) statusText = 'Completed';
       else if (daysCompleted > 0) statusText = daysCompleted + '/3 days done';
-      return `<div class="card week-card ${wc.deload?'deload':''} ${completed?'current':''}" data-action="selectWeek" data-week="${w}">
+      const prevW = arr[i-1];
+      const showBlockHeader = i === 0 || (prevW && weekConfigs[prevW].block !== wc.block);
+      return `${showBlockHeader ? '<div class="cat-header" style="margin-top:'+(i===0?'0':'16')+'px">Block '+wc.block+' — Weeks '+w+'–'+(w+3)+'</div>' : ''}
+      <div class="card week-card ${wc.deload?'deload':''} ${completed?'current':''}" data-action="selectWeek" data-week="${w}">
         <div class="week-num">${w}</div>
         <div class="week-info">
           <div class="week-label">${completed?'COMPLETED · ':''}${wc.type === 'A' ? 'A Week' : 'B Week'}${wc.deload?' · DELOAD':''}</div>
@@ -1888,7 +1905,7 @@ function renderProgramPage() {
     <div class="page-title">Full Program</div>
     <div class="page-sub">Tim's complete program — all days, all exercises</div>
     <div class="prog-week-header">
-      ${[14,15,16,17].map(wk => `<button class="prog-week-pill ${state.programViewWeek===wk?'active':''}" data-action="progWeek" data-week="${wk}">
+      ${Object.keys(weekConfigs).map(Number).map(wk => `<button class="prog-week-pill ${state.programViewWeek===wk?'active':''}" data-action="progWeek" data-week="${wk}">
         Wk${wk} ${weekConfigs[wk].deload?'DL':weekConfigs[wk].type}
       </button>`).join('')}
     </div>
@@ -2362,10 +2379,43 @@ function handleInput(e) {
 }
 
 // --- INIT ---
-// Register service worker
+// Register service worker with update detection
 if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('./service-worker.js').catch(() => {});
+  navigator.serviceWorker.register('./service-worker.js').then(reg => {
+    // Check for updates periodically
+    setInterval(() => reg.update(), 60 * 60 * 1000); // hourly
+  }).catch(() => {});
+  // Listen for update messages from service worker
+  navigator.serviceWorker.addEventListener('message', event => {
+    if (event.data && event.data.type === 'UPDATE_AVAILABLE') {
+      showUpdateBanner();
+    }
+  });
+  // Also detect when a new service worker is waiting
+  navigator.serviceWorker.ready.then(reg => {
+    if (reg.waiting) showUpdateBanner();
+    reg.addEventListener('updatefound', () => {
+      const newWorker = reg.installing;
+      if (newWorker) {
+        newWorker.addEventListener('statechange', () => {
+          if (newWorker.state === 'activated') {
+            showUpdateBanner();
+          }
+        });
+      }
+    });
+  });
 }
+
+function showUpdateBanner() {
+  if (document.getElementById('update-banner')) return;
+  const banner = document.createElement('div');
+  banner.id = 'update-banner';
+  banner.style.cssText = 'position:fixed;top:0;left:0;right:0;z-index:999;background:var(--accent);color:var(--bg);display:flex;align-items:center;justify-content:space-between;padding:12px 16px;padding-top:calc(12px + env(safe-area-inset-top));font-family:DM Sans,sans-serif;font-size:15px;font-weight:600;';
+  banner.innerHTML = 'Update available <button onclick="location.reload()" style="background:var(--bg);color:var(--accent);border:none;padding:8px 16px;border-radius:8px;font-family:DM Sans,sans-serif;font-size:14px;font-weight:700;cursor:pointer">Refresh</button>';
+  document.body.prepend(banner);
+}
+
 document.addEventListener('click', handleAction);
 document.addEventListener('input', handleInput);
 render();

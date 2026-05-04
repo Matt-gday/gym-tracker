@@ -1,4 +1,4 @@
-const CACHE_NAME = 'pcyc-gym-v2';
+const CACHE_NAME = 'pcyc-gym-v3';
 const ASSETS = [
   './',
   './index.html',
@@ -20,9 +20,24 @@ self.addEventListener('activate', event => {
     )
   );
   self.clients.claim();
+  self.clients.matchAll().then(clients => {
+    clients.forEach(client => client.postMessage({ type: 'UPDATE_AVAILABLE' }));
+  });
 });
 
 self.addEventListener('fetch', event => {
+  if (event.request.mode === 'navigate') {
+    event.respondWith(
+      fetch(event.request).then(response => {
+        if (response.ok) {
+          const clone = response.clone();
+          caches.open(CACHE_NAME).then(cache => cache.put(event.request, clone));
+        }
+        return response;
+      }).catch(() => caches.match('./index.html'))
+    );
+    return;
+  }
   event.respondWith(
     caches.match(event.request).then(cached => {
       if (cached) return cached;
@@ -32,11 +47,7 @@ self.addEventListener('fetch', event => {
           caches.open(CACHE_NAME).then(cache => cache.put(event.request, clone));
         }
         return response;
-      }).catch(() => {
-        if (event.request.destination === 'document') {
-          return caches.match('./index.html');
-        }
-      });
+      }).catch(() => {});
     })
   );
 });
