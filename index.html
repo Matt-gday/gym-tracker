@@ -136,52 +136,87 @@ body {
 .card-title { font-size:18px; font-weight:600; margin-bottom:4px; }
 .card-meta { font-size:15px; color:var(--text2); }
 
-/* WEEK CARDS */
-.week-card {
-  position:relative;
-  overflow:hidden;
+/* WEEK LIST ROWS */
+.week-row {
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
 }
-.week-card .week-num {
+.week-row-left {
+  display:flex;
+  align-items:center;
+  gap:14px;
+}
+.week-row-num {
   font-family:'Space Mono',monospace;
-  font-size:48px;
+  font-size:20px;
   font-weight:700;
-  color:var(--accent-dim2);
-  position:absolute;
-  right:16px;
-  top:50%;
-  transform:translateY(-50%);
+  color:var(--text3);
+  min-width:28px;
+  text-align:center;
 }
-.week-card .week-info { position:relative; z-index:1; }
-.week-card .week-label {
+.week-row-title { font-size:16px; font-weight:600; }
+.week-row-sub { font-size:13px; color:var(--text2); margin-top:2px; }
+.week-row.current-week { border-color:var(--accent); background:var(--accent-dim); }
+.week-row.current-week .week-row-num { color:var(--accent); }
+.current-badge {
+  display:inline-block;
+  font-size:10px;
+  font-weight:700;
+  letter-spacing:0.5px;
+  color:var(--accent);
+  background:var(--accent-dim);
+  border:1px solid var(--accent);
+  border-radius:5px;
+  padding:2px 6px;
+  vertical-align:middle;
+  margin-left:6px;
+}
+.deload-control { margin: 12px 0; }
+.deload-suggestion {
+  font-size:13px;
+  color:var(--orange);
+  background:var(--orange-dim);
+  border:1px solid var(--orange);
+  border-radius:10px;
+  padding:10px 12px;
+  margin-bottom:8px;
+  line-height:1.4;
+}
+.deload-toggle-btn {
+  width:100%;
+  padding:12px;
+  border-radius:10px;
+  border:1px solid var(--orange);
+  background:var(--orange-dim);
+  color:var(--orange);
+  font-family:'DM Sans',sans-serif;
   font-size:14px;
   font-weight:600;
-  text-transform:uppercase;
-  letter-spacing:1px;
-  color:var(--accent);
-  margin-bottom:4px;
+  cursor:pointer;
 }
-.week-card .week-title { font-size:22px; font-weight:700; margin-bottom:2px; }
-.week-card .week-detail { font-size:15px; color:var(--text2); }
-.week-card.current { border-color:var(--accent); background:var(--accent-dim); }
-.week-card.deload { border-color:var(--orange); }
-.week-card.deload .week-label { color:var(--orange); }
-.week-card.deload .week-num { color:rgba(251,146,60,0.15); }
-.set-current-btn {
-  position:absolute;
-  right:16px;
-  bottom:14px;
-  padding:6px 14px;
-  border-radius:8px;
-  border:1px solid var(--accent);
-  background:var(--accent-dim);
+.deload-skipped-tag {
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  font-size:13px;
+  color:var(--text2);
+  background:var(--surface2);
+  border:1px solid var(--border);
+  border-radius:10px;
+  padding:10px 12px;
+}
+.deload-skipped-tag button {
+  background:none;
+  border:none;
   color:var(--accent);
   font-family:'DM Sans',sans-serif;
   font-size:13px;
   font-weight:600;
   cursor:pointer;
-  z-index:2;
+  padding:0;
 }
-.set-current-btn:active { background:var(--accent); color:var(--bg); }
 .reset-week-btn {
   padding:8px 14px;
   border-radius:8px;
@@ -272,6 +307,7 @@ body {
   font-weight:500;
 }
 .ex-list-item.completed { border-color:var(--accent); background:var(--accent-dim); }
+.ex-list-item.skipped-item { opacity:0.5; }
 .ex-list-item.completed .ex-num { color:var(--accent); }
 .info-btn {
   width:34px; height:38px;
@@ -830,6 +866,21 @@ body {
 
 /* History exercise-level view */
 .hist-ex-title { font-size:20px; font-weight:700; margin-bottom:16px; }
+.chart-box {
+  background:var(--surface);
+  border:1px solid var(--border);
+  border-radius:var(--radius-sm);
+  padding:12px;
+  margin-bottom:16px;
+}
+.chart-dot {
+  display:inline-block;
+  width:8px;
+  height:8px;
+  border-radius:50%;
+  margin-right:4px;
+  vertical-align:middle;
+}
 .hist-entry {
   background:var(--surface);
   border:1px solid var(--border);
@@ -873,71 +924,21 @@ function getWeightLog() {
   const d = loadData();
   return d.weights || {};
 }
-function getWeekOverrides() {
-  const d = loadData();
-  return d.weekOverrides || {};
-}
-function setWeekOverride(weekNum, override) {
-  const d = loadData();
-  if (!d.weekOverrides) d.weekOverrides = {};
-  d.weekOverrides[weekNum] = override;
-  saveData(d);
-}
-function isWeekOverridden(weekNum) {
-  return !!getWeekOverrides()[weekNum];
-}
-function isDeloadWeek(weekNum) {
-  return weekConfigs[weekNum] && weekConfigs[weekNum].deload && !isWeekOverridden(weekNum);
-}
-
-// Progress tracking
-function getCurrentWeek() {
-  const d = loadData();
-  return d.currentWeek || 14;
-}
-function setCurrentWeek(weekNum) {
-  const d = loadData();
-  d.currentWeek = weekNum;
-  saveData(d);
-}
-function getCompletedDays() {
-  // Returns { weekNum: { mon: true, wed: true, thu: false } }
-  const d = loadData();
-  return d.completedDays || {};
-}
-function markDayCompleted(weekNum, dayKey) {
-  const d = loadData();
-  if (!d.completedDays) d.completedDays = {};
-  if (!d.completedDays[weekNum]) d.completedDays[weekNum] = {};
-  d.completedDays[weekNum][dayKey] = true;
-  saveData(d);
-}
-function isDayCompleted(weekNum, dayKey) {
-  const cd = getCompletedDays();
-  return cd[weekNum] && cd[weekNum][dayKey];
-}
-function getNextDay(weekNum) {
-  const schedule = weekSchedule[weekNum];
-  if (!schedule) return null;
-  const dayOrder = ['mon','wed','thu'];
-  for (const dk of dayOrder) {
-    if (!isDayCompleted(weekNum, dk)) return dk;
-  }
-  return null; // all done
-}
-function isWeekCompleted(weekNum) {
-  return getNextDay(weekNum) === null;
-}
-
-// Weight saving - saves once per exercise per day, locked after save
-function saveWeights(exerciseId, weekNum, date, sets, wasDeload) {
+// Weight saving - saves once per exercise per date+slot, locked after save unless overwrite=true
+function saveWeights(exerciseId, meta, date, sets, overwrite) {
   const d = loadData();
   if (!d.weights) d.weights = {};
   if (!d.weights[exerciseId]) d.weights[exerciseId] = [];
-  // Don't allow duplicate non-reset entry for same date
-  const existing = d.weights[exerciseId].find(e => e.date === date && !e.reset);
-  if (existing) return; // already saved today, don't overwrite
-  d.weights[exerciseId].push({ week: weekNum, date, sets, deload: !!wasDeload });
+  const existingIdx = d.weights[exerciseId].findIndex(e =>
+    e.cycleWeek === meta.cycleWeek && e.day === meta.day && e.slot === meta.slot && !e.reset);
+  if (existingIdx !== -1) {
+    if (!overwrite) return;
+    d.weights[exerciseId][existingIdx].sets = sets;
+    d.weights[exerciseId][existingIdx].date = date;
+    saveData(d);
+    return;
+  }
+  d.weights[exerciseId].push({ date, sets, cycleWeek: meta.cycleWeek, day: meta.day, slot: meta.slot, deload: !!meta.deload });
   saveData(d);
 }
 function getTodaysWeights(exerciseId) {
@@ -965,6 +966,15 @@ function getAllWeights(exerciseId) {
   return w.sort((a,b) => new Date(b.date) - new Date(a.date));
 }
 
+function entryTagLabel(e) {
+  if (e.cycleWeek) {
+    const dayName = e.day ? (programDays[e.day] ? programDays[e.day].name : e.day) : '';
+    return 'Week ' + e.cycleWeek + (dayName ? ' · ' + dayName : '') + (e.deload ? ' · Deload' : '');
+  }
+  if (e.intensity) return e.intensity; // very old entries, pre-redesign
+  if (e.week) return 'Week ' + e.week; // older Tim-week entries, pre-redesign
+  return '';
+}
 function formatSetsHtml(sets) {
   if (!sets || sets.length === 0) return '';
   // Cardio: first value is a machine name string
@@ -980,6 +990,82 @@ function formatSetsHtml(sets) {
   }
   // Standard: just kg values
   return sets.map((s,i) => '<span class="hist-entry-set">S'+(i+1)+': '+s+'kg</span>').join('');
+}
+
+// Progress chart for an exercise's history. Tracks your heaviest single set
+// per session (the usual way to gauge strength trend). Deload sessions are
+// marked with a distinct colour/marker so a planned lighter week never reads
+// as a regression.
+function buildWeightChart(entries, isDB) {
+  const chrono = entries.filter(e => !e.reset).slice().sort((a,b) => new Date(a.date) - new Date(b.date));
+  if (chrono.length === 0) return '';
+
+  function topOf(sets) {
+    let max = null;
+    sets.forEach(s => { const n = parseFloat(s); if (!isNaN(n) && (max === null || n > max)) max = n; });
+    return max;
+  }
+  function topLR(sets) {
+    let maxL = null, maxR = null;
+    sets.forEach(s => {
+      if (typeof s !== 'string' || !s.includes(':')) return;
+      const parts = s.split(':');
+      const nl = parseFloat(parts[0]), nr = parseFloat(parts[1]);
+      if (!isNaN(nl) && (maxL === null || nl > maxL)) maxL = nl;
+      if (!isNaN(nr) && (maxR === null || nr > maxR)) maxR = nr;
+    });
+    return { maxL, maxR };
+  }
+
+  let seriesL, seriesR = null;
+  if (isDB) {
+    seriesL = chrono.map(e => ({ date: e.date, val: topLR(e.sets).maxL, deload: !!e.deload })).filter(p => p.val !== null);
+    seriesR = chrono.map(e => ({ date: e.date, val: topLR(e.sets).maxR, deload: !!e.deload })).filter(p => p.val !== null);
+  } else {
+    seriesL = chrono.map(e => ({ date: e.date, val: topOf(e.sets), deload: !!e.deload })).filter(p => p.val !== null);
+  }
+  if (seriesL.length === 0) return '';
+
+  const allVals = seriesL.concat(seriesR || []).map(p => p.val);
+  let minV = Math.min(...allVals), maxV = Math.max(...allVals);
+  if (minV === maxV) { minV -= 1; maxV += 1; }
+  const pad = (maxV - minV) * 0.2;
+  minV -= pad; maxV += pad;
+
+  const W = 300, H = 140, padX = 10, padY = 14;
+  const plotW = W - padX * 2, plotH = H - padY * 2;
+  function xFor(i, n) { return n <= 1 ? padX + plotW / 2 : padX + (i / (n - 1)) * plotW; }
+  function yFor(v) { return padY + plotH - ((v - minV) / (maxV - minV)) * plotH; }
+
+  function pathFor(pts) {
+    return pts.map((p, i) => (i === 0 ? 'M' : 'L') + xFor(i, pts.length).toFixed(1) + ',' + yFor(p.val).toFixed(1)).join(' ');
+  }
+  function dotsFor(pts, color) {
+    return pts.map((p, i) => {
+      const x = xFor(i, pts.length).toFixed(1), y = yFor(p.val).toFixed(1);
+      const fill = p.deload ? 'var(--orange)' : color;
+      const r = p.deload ? 4.5 : 3.5;
+      return '<circle cx="'+x+'" cy="'+y+'" r="'+r+'" fill="'+fill+'" stroke="var(--bg)" stroke-width="1.5"/>';
+    }).join('');
+  }
+
+  let svg = '<svg viewBox="0 0 '+W+' '+H+'" style="width:100%;height:140px;display:block">';
+  svg += '<line x1="'+padX+'" y1="'+(H-padY)+'" x2="'+(W-padX)+'" y2="'+(H-padY)+'" stroke="var(--border)" stroke-width="1"/>';
+  svg += '<path d="'+pathFor(seriesL)+'" fill="none" stroke="var(--accent)" stroke-width="2"/>';
+  svg += dotsFor(seriesL, 'var(--accent)');
+  if (seriesR) {
+    svg += '<path d="'+pathFor(seriesR)+'" fill="none" stroke="var(--blue)" stroke-width="2"/>';
+    svg += dotsFor(seriesR, 'var(--blue)');
+  }
+  svg += '</svg>';
+
+  const legend = '<div style="display:flex;gap:14px;flex-wrap:wrap;font-size:12px;color:var(--text2);margin-top:6px">'
+    + '<span><span class="chart-dot" style="background:var(--accent)"></span>' + (isDB ? 'Left' : 'Top set') + '</span>'
+    + (isDB ? '<span><span class="chart-dot" style="background:var(--blue)"></span>Right</span>' : '')
+    + '<span><span class="chart-dot" style="background:var(--orange)"></span>Deload week</span>'
+    + '</div>';
+
+  return svg + legend;
 }
 
 // --- EXERCISE DATABASE ---
@@ -1005,7 +1091,6 @@ const exercises = {
   },
   'goblet_squats': {
     name: 'Goblet Squats',
-    isDB: true,
     category: 'Squat Focus',
     desc: 'Hold a dumbbell or kettlebell at chest height and squat. Great for learning squat mechanics.',
     cues: ['Hold weight close to chest with both hands','Elbows pointing down between knees','Sit back and down, keeping chest up','Drive through heels to stand','Keep core braced throughout'],
@@ -1253,11 +1338,11 @@ const exercises = {
 
   // DAY 4: UPPER
   'landmine_press': {
-    name: 'Landmine Press (Single Arm Kneeling)',
+    name: 'Landmine Press (Two-Handed Standing)',
     category: 'Upper Focus',
-    desc: 'Single arm pressing using a landmine/barbell in a corner. The kneeling position builds core stability and the arc of the press follows a natural overhead path.',
-    cues: ['Half-kneeling position, opposite knee down','Hold end of barbell at shoulder','Press up and forward following the arc','Control the descent','Keep core braced, no leaning'],
-    video: 'https://www.youtube.com/results?search_query=single+arm+kneeling+landmine+press+tutorial'
+    desc: 'Two-handed standing press using a barbell in a landmine lever attachment. Both hands grip the end of the bar; the pivoting lever guides it along a natural overhead arc.',
+    cues: ['Stand facing the landmine attachment, feet shoulder width','Grip the end of the bar with both hands at chest height','Press up and forward, following the arc of the lever','Control the descent back to chest','Keep core braced, no leaning back'],
+    video: 'https://www.youtube.com/results?search_query=two+handed+standing+landmine+press+tutorial'
   },
   'incline_db_neutral': {
     name: 'Incline DB Press (Neutral Grip)',
@@ -1338,122 +1423,451 @@ const exercises = {
     desc: 'Like a farmer carry but with weight on one side only. Forces anti-lateral flexion of the core.',
     cues: ['Hold heavy weight in one hand','Stand tall, don\'t lean to either side','Walk controlled for distance','Switch hands for other side','Core works hard to resist leaning'],
     video: 'https://www.youtube.com/results?search_query=suitcase+carry+tutorial'
+  },
+
+  // --- STANDARD LIFT VARIANTS (Tim's current group plan — not shoulder-adjusted) ---
+  'squats_standard': {
+    name: 'Squats (Barbell Back Squat)',
+    category: 'Squat Focus',
+    desc: 'The standard barbell back squat, bar across the upper back. Tim\'s current group programming — check in with your shoulder before loading heavy.',
+    cues: ['Bar set across upper traps, not neck','Feet shoulder width, toes slightly out','Break at hips and knees together','Squat to at least parallel','Drive through mid-foot to stand'],
+    video: 'https://www.youtube.com/results?search_query=barbell+back+squat+tutorial'
+  },
+  'pause_squats_standard': {
+    name: 'Pause Squats (Barbell)',
+    category: 'Squat Focus',
+    desc: 'A barbell squat with a 2-3 second pause at the bottom. Builds strength out of the hole and removes bounce.',
+    cues: ['Squat down as normal','Pause 2-3 seconds at the bottom, stay tight','No bouncing out of the hole','Drive up under control','Reset brace each rep'],
+    video: 'https://www.youtube.com/results?search_query=pause+squat+tutorial'
+  },
+  'seated_hamstring_curls': {
+    name: 'Seated Hamstring Curls',
+    category: 'Squat Focus',
+    desc: 'Machine hamstring curl performed seated. Isolates the hamstrings with a fixed, supported path.',
+    cues: ['Adjust pad to sit just above the heel','Back flat against the seat','Curl heels down and back','Squeeze hamstrings at the bottom','Controlled return to start'],
+    video: 'https://www.youtube.com/results?search_query=seated+hamstring+curl+tutorial'
+  },
+  'standing_calf_raises': {
+    name: 'Standing Calf Raises',
+    category: 'Squat Focus',
+    desc: 'Standing machine or barbell calf raise. Targets the gastrocnemius through a full range of motion.',
+    cues: ['Balls of feet on the platform edge','Lower heels below platform level for a stretch','Press up as high as possible onto toes','Pause and squeeze at the top','Controlled descent each rep'],
+    video: 'https://www.youtube.com/results?search_query=standing+calf+raise+tutorial'
+  },
+  'planks': {
+    name: 'Planks',
+    category: 'Squat Focus',
+    desc: 'Core stability hold on forearms and toes. Builds trunk bracing strength for the big lifts.',
+    cues: ['Forearms and toes on the ground','Body in a straight line, hips level','Brace core, squeeze glutes','Don\'t let hips sag or pike up','Breathe steadily throughout the hold'],
+    video: 'https://www.youtube.com/results?search_query=plank+exercise+tutorial'
+  },
+  'bench_press_standard': {
+    name: 'Bench Press (Barbell)',
+    category: 'Bench Focus',
+    desc: 'The standard barbell bench press. Tim\'s current group programming — a bar-loaded, fixed-path press, less forgiving on the shoulder than the DB neutral-grip version.',
+    cues: ['Grip just outside shoulder width','Feet flat, slight arch, shoulder blades pinched','Lower bar to mid-chest with control','Press up and slightly back','Full lockout at the top'],
+    video: 'https://www.youtube.com/results?search_query=barbell+bench+press+tutorial'
+  },
+  'incline_bench_press_standard': {
+    name: 'Incline Bench Press (Barbell)',
+    category: 'Bench Focus',
+    desc: 'Barbell press on an incline bench. Targets the upper chest with a fixed bar path.',
+    cues: ['Bench set to ~30 degree incline','Grip just outside shoulder width','Lower bar to upper chest','Press up and slightly back','Control the descent each rep'],
+    video: 'https://www.youtube.com/results?search_query=incline+barbell+bench+press+tutorial'
+  },
+  'db_lateral_raises': {
+    name: 'DB Lateral Raises',
+    category: 'Bench Focus',
+    desc: 'Straight-out-to-the-side dumbbell raise for the medial deltoid. More shoulder-loaded than the scaption version you\'ve been using.',
+    cues: ['Stand with dumbbells at sides','Raise straight out to shoulder height','Slight bend in elbows throughout','Lead with elbows, not hands','Lower slowly and controlled'],
+    video: 'https://www.youtube.com/results?search_query=dumbbell+lateral+raise+tutorial'
+  },
+  'pushups': {
+    name: 'Pushups',
+    category: 'Bench Focus',
+    desc: 'Bodyweight press from the floor. Simple, scalable, no equipment needed.',
+    cues: ['Hands slightly wider than shoulders','Body in a straight line head to heels','Lower chest to just above the floor','Press back up to full extension','Keep core braced throughout'],
+    video: 'https://www.youtube.com/results?search_query=pushup+tutorial+form'
+  },
+  'leg_extensions': {
+    name: 'Leg Extensions',
+    category: 'Deadlift Focus',
+    desc: 'Machine quad isolation exercise. Seated, extending the knee against resistance.',
+    cues: ['Adjust pad to sit just above the ankle','Back flat against the seat','Extend legs to full lockout','Squeeze quads at the top','Controlled return, don\'t let the stack slam'],
+    video: 'https://www.youtube.com/results?search_query=leg+extension+machine+tutorial'
+  },
+  'hanging_knee_raises': {
+    name: 'Hanging Knee Raises',
+    category: 'Deadlift Focus',
+    desc: 'Hanging from a bar, raise the knees toward the chest. Core and hip flexor exercise — mind the shoulder on the hang.',
+    cues: ['Hang from a pull-up bar, shoulders engaged','Raise knees toward chest','Avoid swinging — controlled movement','Lower slowly back to a dead hang','Keep grip firm throughout'],
+    video: 'https://www.youtube.com/results?search_query=hanging+knee+raise+tutorial'
+  },
+  'touch_n_go_bench_press': {
+    name: 'Touch and Go Bench Press (Barbell)',
+    category: 'Upper Focus',
+    desc: 'Barbell bench press without pausing at the chest — the bar touches and immediately presses back up. More ballistic and shoulder-loaded than a paused press.',
+    cues: ['Set up as a normal bench press','Lower with control to the chest','Touch and drive straight back up — no pause','Keep shoulder blades pinned throughout','Full lockout at the top'],
+    video: 'https://www.youtube.com/results?search_query=touch+and+go+bench+press+tutorial'
+  },
+  'incline_db_flys': {
+    name: 'Incline DB Flys',
+    category: 'Upper Focus',
+    desc: 'Dumbbell fly on an incline bench. Stretches and isolates the upper chest through a wide arc — more shoulder stretch than a pressing movement.',
+    cues: ['Bench set to ~30 degree incline','Start with dumbbells above chest, slight elbow bend','Lower arms out to the sides in an arc','Feel the stretch, don\'t overextend','Bring dumbbells back together over chest'],
+    video: 'https://www.youtube.com/results?search_query=incline+dumbbell+fly+tutorial'
+  },
+  'chest_press_machine': {
+    name: 'Chest Press (Machine)',
+    category: 'Upper Focus',
+    desc: 'Seated chest press on a machine. Fixed path, shared-load handles.',
+    cues: ['Adjust seat so handles are at chest height','Press handles forward to full extension','Control the return, don\'t let the stack slam','Keep shoulder blades pinned to the pad','Breathe out on the press'],
+    video: 'https://www.youtube.com/results?search_query=machine+chest+press+tutorial'
+  },
+  'hack_squats': {
+    name: 'Hack Squats',
+    category: 'Squat Focus',
+    desc: 'Machine squat on an angled sled, back supported throughout.',
+    cues: ['Shoulders under pads, feet mid-platform','Release the safety and lower under control','Squat to at least parallel','Drive through the whole foot to stand','Don\'t lock knees hard at the top'],
+    video: 'https://www.youtube.com/results?search_query=hack+squat+machine+tutorial'
+  },
+  'cable_pull_through': {
+    name: 'Cable Pull-Through',
+    category: 'Deadlift Focus',
+    desc: 'Hip hinge pattern pulling a cable from between the legs. Hits hamstrings and glutes without loading the spine like a barbell would.',
+    cues: ['Face away from the low pulley, rope between legs','Hinge at the hips, soft knees','Push hips back, keep back flat','Drive hips forward to stand tall','Squeeze glutes at the top'],
+    video: 'https://www.youtube.com/results?search_query=cable+pull+through+tutorial'
+  },
+  'cable_rope_curl': {
+    name: 'Cable Rope Curl',
+    category: 'Upper Focus',
+    desc: 'Bicep curl using a rope attachment on a low cable pulley. Constant tension through the whole range.',
+    cues: ['Stand facing the low pulley, rope in both hands','Elbows pinned to your sides','Curl up, squeezing at the top','Lower slowly, keep tension on','Don\'t swing or use momentum'],
+    video: 'https://www.youtube.com/results?search_query=cable+rope+curl+tutorial'
   }
 };
 
-// --- PROGRAM STRUCTURE ---
-// Week types and their configurations
-const weekConfigs = {
-  14: { type:'A', pct:60, rpe:6, label:'Week 14', desc:'A Week — 60% — RPE 6', block:1 },
-  15: { type:'B', pct:65, rpe:7, label:'Week 15', desc:'B Week — 65% — RPE 7', block:1 },
-  16: { type:'A', pct:70, rpe:8, label:'Week 16', desc:'A Week — 70% — RPE 8', block:1 },
-  17: { type:'B', pct:50, rpe:0, label:'Week 17', desc:'B Week — 50% — Deload', deload:true, block:1 },
-  18: { type:'A', pct:60, rpe:6, label:'Week 18', desc:'A Week — 60% — RPE 6', block:2 },
-  19: { type:'B', pct:65, rpe:7, label:'Week 19', desc:'B Week — 65% — RPE 7', block:2 },
-  20: { type:'A', pct:70, rpe:8, label:'Week 20', desc:'A Week — 70% — RPE 8', block:2 },
-  21: { type:'B', pct:60, rpe:0, label:'Week 21', desc:'B Week — 60% — Deload', deload:true, block:2 }
-};
+// Pick the exercise id for a given day-slot and variant, falling back to 'a' if this
+// slot doesn't have that variant defined (e.g. cardio only has one version).
+function pickVariantId(exDef, variant) {
+  return exDef[variant] || exDef.a;
+}
 
-// Day definitions: exercises with sets/reps per week type
-// For each exercise: [exerciseId_A, exerciseId_B, {weekNum: {sets, reps}}]
-const dayDefinitions = {
+// --- PROGRAM STRUCTURE ---
+// Your own 3-day program: Squat (Mon) / Upper (Wed) / Deadlift (Thu).
+// Each day has an A and B exercise list that alternates weekly, on a repeating
+// 4-week cycle: Week1=A, Week2=B, Week3=A (same reps as Week1), Week4=B+Deload
+// (reps roughly halved). Then it repeats from Week1 again - flat forever, no
+// auto-progression. You increase actual weight yourself as you get stronger.
+const programDays = {
   'squat': {
-    name: 'Squat Focus',
-    dayNum: 1,
-    icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2a2 2 0 100 4 2 2 0 000-4z"/><path d="M15 8H9l-3 13h2l2-7 2 7h2l2-7"/></svg>',
+    name: 'Squat Day',
+    icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="3.6" r="1.9"/><line x1="5" y1="7.3" x2="19" y2="7.3"/><line x1="5" y1="5.6" x2="5" y2="9"/><line x1="19" y1="5.6" x2="19" y2="9"/><line x1="12" y1="5.5" x2="12" y2="9.5"/><path d="M12 9.5 L6.5 12.5 L6 19.5"/><path d="M12 9.5 L17.5 12.5 L18 19.5"/></svg>',
     iconClass: 'squat',
     exercises: [
-      { a:'zercher_squats', b:'zercher_squats', data:{14:{s:3,r:'10'},15:{s:3,r:'10'},16:{s:3,r:'10'},17:{s:3,r:'5'},18:{s:3,r:'8'},19:{s:3,r:'8'},20:{s:3,r:'8'},21:{s:3,r:'5'}}},
-      { a:'pulse_squats_zercher', b:'goblet_squats', data:{14:{s:3,r:'6'},15:{s:3,r:'6'},16:{s:3,r:'6'},17:{s:3,r:'3'},18:{s:3,r:'6'},19:{s:3,r:'6'},20:{s:3,r:'6'},21:{s:3,r:'3'}}},
-      { a:'rdl', b:'step_ups', data:{14:{s:3,r:'8'},15:{s:3,r:'10ea'},16:{s:3,r:'8'},17:{s:3,r:'5ea'},18:{s:3,r:'8'},19:{s:3,r:'8ea'},20:{s:3,r:'8'},21:{s:3,r:'5ea'}}},
-      { a:'leg_press', b:'hip_thrusts', data:{14:{s:3,r:'10'},15:{s:3,r:'10'},16:{s:3,r:'10'},17:{s:3,r:'5'},18:{s:3,r:'8'},19:{s:3,r:'8'},20:{s:3,r:'8'},21:{s:3,r:'5'}}},
-      { a:'romanian_twists', b:'cable_crunches', data:{14:{s:3,r:'10ea'},15:{s:3,r:'20'},16:{s:3,r:'10ea'},17:{s:3,r:'10'},18:{s:3,r:'18'},19:{s:3,r:'18'},20:{s:3,r:'18'},21:{s:3,r:'10'}}},
-      { a:'seated_calf_raises', b:'single_leg_calf_raises', data:{14:{s:3,r:'10'},15:{s:3,r:'10ea'},16:{s:3,r:'10'},17:{s:3,r:'5ea'},18:{s:3,r:'8'},19:{s:3,r:'8ea'},20:{s:3,r:'8'},21:{s:3,r:'5ea'}}},
-      { a:'cardio', b:'cardio', data:{14:{s:0,r:'10min'},15:{s:0,r:'10min'},16:{s:0,r:'10min'},17:{s:0,r:'10min'},18:{s:0,r:'10min'},19:{s:0,r:'10min'},20:{s:0,r:'10min'},21:{s:0,r:'10min'}}}
-    ]
-  },
-  'bench': {
-    name: 'Bench Focus',
-    dayNum: 2,
-    icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="10" width="3" height="4" rx="0.5"/><rect x="20" y="10" width="3" height="4" rx="0.5"/><rect x="4" y="9" width="2" height="6" rx="0.5"/><rect x="18" y="9" width="2" height="6" rx="0.5"/><line x1="6" y1="12" x2="18" y2="12"/></svg>',
-    iconClass: 'bench',
-    exercises: [
-      { a:'bench_db_neutral', b:'bench_db_neutral', data:{14:{s:3,r:'10'},15:{s:3,r:'10'},16:{s:3,r:'10'},17:{s:3,r:'5'},18:{s:3,r:'8'},19:{s:3,r:'8'},20:{s:3,r:'8'},21:{s:3,r:'5'}}},
-      { a:'larsen_db_neutral', b:'db_incline_neutral', data:{14:{s:3,r:'8'},15:{s:3,r:'6'},16:{s:3,r:'8'},17:{s:3,r:'3'},18:{s:3,r:'6'},19:{s:3,r:'6'},20:{s:3,r:'6'},21:{s:3,r:'3'}}},
-      { a:'seated_cable_rows', b:'barbell_rows', data:{14:{s:4,r:'8'},15:{s:4,r:'8'},16:{s:4,r:'8'},17:{s:4,r:'4'},18:{s:4,r:'6'},19:{s:4,r:'6'},20:{s:4,r:'6'},21:{s:4,r:'4'}}},
-      { a:'scaption_raises', b:'cable_crossovers_high_low', data:{14:{s:3,r:'10'},15:{s:3,r:'10'},16:{s:3,r:'10'},17:{s:3,r:'5'},18:{s:3,r:'8'},19:{s:3,r:'8'},20:{s:3,r:'8'},21:{s:3,r:'5'}}},
-      { a:'face_pulls', b:'rear_delt_flyes', data:{14:{s:3,r:'20'},15:{s:3,r:'20'},16:{s:3,r:'20'},17:{s:3,r:'10'},18:{s:3,r:'18'},19:{s:3,r:'18'},20:{s:3,r:'18'},21:{s:3,r:'10'}}},
-      { a:'tricep_pushdowns', b:'jm_presses', data:{14:{s:3,r:'12'},15:{s:3,r:'12'},16:{s:3,r:'12'},17:{s:3,r:'6'},18:{s:3,r:'10'},19:{s:3,r:'10'},20:{s:3,r:'10'},21:{s:3,r:'6'}}},
-      { a:'cardio', b:'cardio', data:{14:{s:0,r:'10min'},15:{s:0,r:'10min'},16:{s:0,r:'10min'},17:{s:0,r:'10min'},18:{s:0,r:'10min'},19:{s:0,r:'10min'},20:{s:0,r:'10min'},21:{s:0,r:'10min'}}}
-    ]
-  },
-  'deadlift': {
-    name: 'Deadlift Focus',
-    dayNum: 3,
-    icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 15l3-3 2 2 4-4 2 2 5-5"/><line x1="2" y1="20" x2="22" y2="20"/><rect x="4" y="14" width="3" height="6"/><rect x="10" y="10" width="3" height="10"/><rect x="16" y="6" width="3" height="14"/></svg>',
-    iconClass: 'dead',
-    exercises: [
-      { a:'deadlift', b:'deadlift', data:{14:{s:3,r:'10'},15:{s:3,r:'10'},16:{s:3,r:'10'},17:{s:3,r:'5'},18:{s:3,r:'8'},19:{s:3,r:'8'},20:{s:3,r:'8'},21:{s:3,r:'5'}}},
-      { a:'trap_bar_deadlift', b:'pin_block_deadlift', data:{14:{s:3,r:'8'},15:{s:3,r:'6'},16:{s:3,r:'8'},17:{s:3,r:'3'},18:{s:3,r:'6'},19:{s:3,r:'6'},20:{s:3,r:'6'},21:{s:3,r:'3'}}},
-      { a:'lat_pulldowns_neutral', b:'single_arm_db_rows', data:{14:{s:4,r:'10'},15:{s:4,r:'10ea'},16:{s:4,r:'10'},17:{s:4,r:'5ea'},18:{s:4,r:'8'},19:{s:4,r:'8ea'},20:{s:4,r:'8'},21:{s:4,r:'5ea'}}},
-      { a:'chest_supported_rows', b:'tbar_rows', data:{14:{s:3,r:'10'},15:{s:3,r:'10'},16:{s:3,r:'10'},17:{s:3,r:'5'},18:{s:3,r:'8'},19:{s:3,r:'8'},20:{s:3,r:'8'},21:{s:3,r:'5'}}},
-      { a:'bulgarian_split_squats', b:'pallof_press', data:{14:{s:3,r:'10ea'},15:{s:3,r:'12ea'},16:{s:3,r:'10ea'},17:{s:3,r:'6ea'},18:{s:3,r:'8ea'},19:{s:3,r:'10ea'},20:{s:3,r:'8ea'},21:{s:3,r:'6ea'}}},
-      { a:'back_extensions', b:'walking_lunges', data:{14:{s:3,r:'10'},15:{s:3,r:'10ea'},16:{s:3,r:'10'},17:{s:3,r:'5ea'},18:{s:3,r:'8'},19:{s:3,r:'8ea'},20:{s:3,r:'8'},21:{s:3,r:'5ea'}}},
-      { a:'cardio', b:'cardio', data:{14:{s:0,r:'10min'},15:{s:0,r:'10min'},16:{s:0,r:'10min'},17:{s:0,r:'10min'},18:{s:0,r:'10min'},19:{s:0,r:'10min'},20:{s:0,r:'10min'},21:{s:0,r:'10min'}}}
+      { a:'zercher_squats', b:'zercher_squats', s:3, r:'10' },
+      { a:'leg_press', b:'hack_squats', s:3, r:'10' },
+      { a:'rdl', b:'hip_thrusts', s:3, r:'10' },
+      { a:'seated_hamstring_curls', b:'leg_extensions', s:3, r:'10' },
+      { a:'standing_calf_raises', b:'seated_calf_raises', s:3, r:'12' },
+      { a:'romanian_twists', b:'cable_crunches', s:3, r:'20' },
+      { a:'cardio', b:'cardio', s:0, r:'10min' }
     ]
   },
   'upper': {
-    name: 'Upper Focus',
-    dayNum: 4,
-    icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="5" r="3"/><path d="M12 8v3"/><path d="M8 11l-4 0"/><path d="M16 11l4 0"/><path d="M12 14v4"/><path d="M9 22l3-4 3 4"/></svg>',
+    name: 'Upper Day',
+    icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="7.3" cy="4" r="1.9"/><line x1="7.3" y1="5.9" x2="7.3" y2="13"/><path d="M7.3 13 L5.8 19.5"/><path d="M7.3 13 L9.3 19.5"/><path d="M7.3 7.3 L12 10.7"/><path d="M12 10.7 L12.6 4.8"/><line x1="10.8" y1="4.8" x2="14.4" y2="4.8"/><line x1="10.8" y1="3.6" x2="10.8" y2="6"/><line x1="14.4" y1="3.6" x2="14.4" y2="6"/></svg>',
     iconClass: 'upper',
     exercises: [
-      { a:'landmine_press', b:'landmine_press', data:{14:{s:3,r:'8ea'},15:{s:3,r:'8ea'},16:{s:3,r:'8ea'},17:{s:3,r:'4ea'},18:{s:3,r:'7ea'},19:{s:3,r:'7ea'},20:{s:3,r:'7ea'},21:{s:3,r:'4ea'}}},
-      { a:'incline_db_neutral', b:'db_bench_neutral', data:{14:{s:3,r:'8'},15:{s:3,r:'8'},16:{s:3,r:'8'},17:{s:3,r:'4'},18:{s:3,r:'7'},19:{s:3,r:'7'},20:{s:3,r:'7'},21:{s:3,r:'4'}}},
-      { a:'scaption_raises_upper', b:'kb_swings', data:{14:{s:3,r:'16'},15:{s:3,r:'15'},16:{s:3,r:'16'},17:{s:3,r:'8'},18:{s:3,r:'14'},19:{s:3,r:'13'},20:{s:3,r:'14'},21:{s:3,r:'8'}}},
-      { a:'tricep_kickbacks', b:'close_grip_db_bench', data:{14:{s:3,r:'10ea'},15:{s:3,r:'10'},16:{s:3,r:'10ea'},17:{s:3,r:'5'},18:{s:3,r:'8ea'},19:{s:3,r:'8'},20:{s:3,r:'8ea'},21:{s:3,r:'5'}}},
-      { a:'hammer_curls', b:'bicep_curl_machine', data:{14:{s:3,r:'12ea'},15:{s:3,r:'10'},16:{s:3,r:'12ea'},17:{s:3,r:'5'},18:{s:3,r:'10ea'},19:{s:3,r:'8'},20:{s:3,r:'10ea'},21:{s:3,r:'5'}}},
-      { a:'farmer_carry', b:'suitcase_carry', data:{14:{s:3,r:'1 lap'},15:{s:3,r:'1 lap ea'},16:{s:3,r:'1 lap'},17:{s:3,r:'1 lap ea'},18:{s:3,r:'1 lap'},19:{s:3,r:'1 lap ea'},20:{s:3,r:'1 lap'},21:{s:3,r:'1 lap ea'}}},
-      { a:'cardio', b:'cardio', data:{14:{s:0,r:'10min'},15:{s:0,r:'10min'},16:{s:0,r:'10min'},17:{s:0,r:'10min'},18:{s:0,r:'10min'},19:{s:0,r:'10min'},20:{s:0,r:'10min'},21:{s:0,r:'10min'}}}
+      { a:'chest_press_machine', b:'landmine_press', s:3, r:'10' },
+      { a:'face_pulls', b:'face_pulls', s:3, r:'20' },
+      { a:'scaption_raises', b:'scaption_raises', s:3, r:'10' },
+      { a:'bicep_curl_machine', b:'bicep_curl_machine', s:3, r:'10' },
+      { a:'cable_rope_curl', b:'cable_rope_curl', s:3, r:'10' },
+      { a:'tricep_pushdowns', b:'tricep_pushdowns', s:3, r:'12' },
+      { a:'farmer_carry', b:'suitcase_carry', s:3, r:'1 lap ea' },
+      { a:'cardio', b:'cardio', s:0, r:'10min' }
+    ]
+  },
+  'deadlift': {
+    name: 'Deadlift Day',
+    icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="8.5" cy="4" r="1.9"/><path d="M8.8 5.8 L15 13"/><line x1="9.5" y1="7" x2="12" y2="16"/><line x1="15" y1="13" x2="15" y2="19.5"/><line x1="9" y1="16" x2="18" y2="16"/><line x1="9" y1="14.3" x2="9" y2="17.7"/><line x1="18" y1="14.3" x2="18" y2="17.7"/></svg>',
+    iconClass: 'dead',
+    exercises: [
+      { a:'deadlift', b:'deadlift', s:3, r:'8' },
+      { a:'pin_block_deadlift', b:'cable_pull_through', s:3, r:'6' },
+      { a:'lat_pulldowns_neutral', b:'lat_pulldowns_neutral', s:4, r:'10' },
+      { a:'chest_supported_rows', b:'tbar_rows', s:3, r:'10' },
+      { a:'bulgarian_split_squats', b:'walking_lunges', s:3, r:'10ea' },
+      { a:'back_extensions', b:'pallof_press', s:3, r:'10' },
+      { a:'cardio', b:'cardio', s:0, r:'10min' }
     ]
   }
 };
+const dayOrder = ['squat', 'upper', 'deadlift'];
 
-// 3-day rotation: always 2 lower + 1 upper per week
-// Lower/Upper/Lower split: Mon=Squat, Wed=Bench or Upper, Thu=Deadlift
-// Upper day alternates between Bench and Upper across weeks
-// Week 14(A): Squat-A, Bench-A, Deadlift-A
-// Week 15(B): Squat-B, Upper-B, Deadlift-B
-// Week 16(A): Squat-A, Upper-A, Deadlift-A
-// Week 17(B): Squat-B, Bench-B, Deadlift-B
-const weekSchedule = {
-  14: { mon:'squat', wed:'bench', thu:'deadlift' },
-  15: { mon:'squat', wed:'upper', thu:'deadlift' },
-  16: { mon:'squat', wed:'upper', thu:'deadlift' },
-  17: { mon:'squat', wed:'bench', thu:'deadlift' },
-  18: { mon:'squat', wed:'bench', thu:'deadlift' },
-  19: { mon:'squat', wed:'upper', thu:'deadlift' },
-  20: { mon:'squat', wed:'upper', thu:'deadlift' },
-  21: { mon:'squat', wed:'bench', thu:'deadlift' }
-};
+// Halve a rep target for the deload week, preserving any suffix like 'ea' or 'min'.
+function deloadRepsFor(r) {
+  if (!r || typeof r !== 'string') return r;
+  if (r.includes('min')) return r; // cardio duration untouched
+  const m = r.match(/^(\d+)(.*)$/);
+  if (!m) return r;
+  const num = parseInt(m[1]);
+  const half = Math.max(1, Math.round(num / 2));
+  return half + m[2];
+}
+
+// 4-week repeating cycle: position 1=A, 2=B, 3=A, 4=B+Deload.
+function cyclePosForWeek(w) { return ((w - 1) % 4) + 1; }
+function variantForWeek(w) { const p = cyclePosForWeek(w); return (p === 1 || p === 3) ? 'a' : 'b'; }
+function isDeloadWeek(w) { return cyclePosForWeek(w) === 4; }
+
+// A natural deload week can be manually overridden off (e.g. a missed week
+// already gave you the recovery a deload was for) - or restored back.
+function getEffectiveDeload(cycleWeek) {
+  const d = loadData();
+  if (d.deloadOverrides && d.deloadOverrides[cycleWeek] !== undefined) return d.deloadOverrides[cycleWeek];
+  return isDeloadWeek(cycleWeek);
+}
+function setDeloadOverride(cycleWeek, value) {
+  const d = loadData();
+  if (!d.deloadOverrides) d.deloadOverrides = {};
+  if (value === null) delete d.deloadOverrides[cycleWeek];
+  else d.deloadOverrides[cycleWeek] = value;
+  saveData(d);
+}
+// How many days since anything was last logged, anywhere - used to gently
+// suggest skipping a deload if there was already a real break.
+function daysSinceLastSession() {
+  const d = loadData();
+  let maxDate = null;
+  Object.values(d.weights || {}).forEach(entries => {
+    entries.forEach(e => {
+      if (e.reset) return;
+      if (!maxDate || new Date(e.date) > new Date(maxDate)) maxDate = e.date;
+    });
+  });
+  if (!maxDate) return null;
+  return Math.round((new Date(todayStr()) - new Date(maxDate)) / 86400000);
+}
+
+function getProgress() {
+  const d = loadData();
+  return d.progress || { cycleWeek: 1, daysDone: [] };
+}
+function saveProgress(progress) {
+  const d = loadData();
+  d.progress = progress;
+  saveData(d);
+}
+// A day only "advances" the program once you've done at least one of the 3
+// sessions this cycle-week. Miss a whole week and it just waits for you.
+function canAdvanceWeek() {
+  return getProgress().daysDone.length > 0;
+}
+function advanceWeek() {
+  const p = getProgress();
+  p.cycleWeek += 1;
+  p.daysDone = [];
+  saveProgress(p);
+}
+
+// Substitutions: which exercise you actually picked for a given cycle-week +
+// day + slot, if different from the program default.
+function getSubstitution(cycleWeek, day, slot) {
+  const d = loadData();
+  const key = cycleWeek + '_' + day;
+  return (d.substitutions && d.substitutions[key]) ? d.substitutions[key][slot] : null;
+}
+function setSubstitution(cycleWeek, day, slot, exId) {
+  const d = loadData();
+  if (!d.substitutions) d.substitutions = {};
+  const key = cycleWeek + '_' + day;
+  if (!d.substitutions[key]) d.substitutions[key] = {};
+  d.substitutions[key][slot] = exId;
+  saveData(d);
+}
+function getActualIdForSlot(day, cycleWeek, slot) {
+  const sub = getSubstitution(cycleWeek, day, slot);
+  if (sub) return sub;
+  const variant = variantForWeek(cycleWeek);
+  return pickVariantId(programDays[day].exercises[slot], variant);
+}
+function getRepsForSlot(day, cycleWeek, slot) {
+  const ex = programDays[day].exercises[slot];
+  return getEffectiveDeload(cycleWeek) ? deloadRepsFor(ex.r) : ex.r;
+}
+
+// Find a logged entry for a given cycle-week/day/slot, regardless of which
+// exercise id it ended up saved under (handles substitutions robustly).
+function findSlotEntry(cycleWeek, day, slot) {
+  const log = getWeightLog();
+  for (const exId in log) {
+    const found = log[exId].find(e => e.cycleWeek === cycleWeek && e.day === day && e.slot === slot && !e.reset);
+    if (found) return { exId, entry: found };
+  }
+  return null;
+}
+
+// --- SESSION / DAY STATE ---
+function getActiveSession() {
+  const d = loadData();
+  return d.activeSession || null;
+}
+function setActiveSession(session) {
+  const d = loadData();
+  d.activeSession = session;
+  saveData(d);
+}
+function todayStr() { return new Date().toISOString().split('T')[0]; }
+
+function startSession(day, cycleWeek) {
+  setActiveSession({ day, cycleWeek, date: todayStr() });
+}
+
+// Key for in-progress, unsaved input drafts - so navigating away and back
+// (or to a different exercise) before hitting Save never loses what you typed.
+// Drafts are persisted to storage (not just in-memory) so they survive the
+// app being fully closed, not just backgrounded.
+function draftKeyFor(ctx) {
+  return ctx ? (ctx.cycleWeek + '_' + ctx.day + '_' + ctx.slot) : null;
+}
+function getDraft(key) {
+  if (!key) return {};
+  const d = loadData();
+  return (d.drafts && d.drafts[key]) || {};
+}
+function updateDraft(key, updater) {
+  if (!key) return;
+  const d = loadData();
+  if (!d.drafts) d.drafts = {};
+  if (!d.drafts[key]) d.drafts[key] = {};
+  updater(d.drafts[key]);
+  saveData(d);
+}
+function clearDraft(key) {
+  if (!key) return;
+  const d = loadData();
+  if (d.drafts && d.drafts[key]) {
+    delete d.drafts[key];
+    saveData(d);
+  }
+}
+
+// Commit one draft's typed-but-unsaved values into real, permanent data.
+// Mutates the raw data object in place; caller is responsible for saveData().
+function commitDraftToData(d, key, draft) {
+  const parts = key.split('_');
+  const cycleWeek = parseInt(parts[0]);
+  const day = parts[1];
+  const slot = parseInt(parts[2]);
+  const dd = programDays[day];
+  if (!dd || !dd.exercises[slot]) return;
+  const exDef = dd.exercises[slot];
+  const subs = (d.substitutions && d.substitutions[cycleWeek + '_' + day]) || {};
+  const exId = subs[slot] || pickVariantId(exDef, variantForWeek(cycleWeek));
+  const isCardioSlot = exId === 'cardio';
+
+  let sets = null;
+  if (isCardioSlot) {
+    if (draft.machine) sets = [draft.machine, draft.duration || '10'];
+  } else if (draft.sets && draft.sets.some(s => s !== undefined && s !== '' && s !== ':')) {
+    sets = draft.sets.map(s => s === undefined ? '' : s);
+  }
+  if (!sets) return; // nothing meaningful was actually typed
+
+  if (!d.weights) d.weights = {};
+  if (!d.weights[exId]) d.weights[exId] = [];
+  const existingIdx = d.weights[exId].findIndex(e => e.cycleWeek === cycleWeek && e.day === day && e.slot === slot && !e.reset);
+  if (existingIdx !== -1) {
+    // Editing an already-saved entry - keep its original date, just update the values
+    d.weights[exId][existingIdx].sets = sets;
+  } else {
+    // A brand new entry that was never explicitly saved - date it to when it
+    // was actually being worked on (the session's date), not "today" (the new day).
+    const dateToUse = (d.activeSession && d.activeSession.day === day && d.activeSession.cycleWeek === cycleWeek)
+      ? d.activeSession.date
+      : (d.lastSeenDate || todayStr());
+    d.weights[exId].push({ date: dateToUse, sets, cycleWeek, day, slot, deload: getEffectiveDeload(cycleWeek) });
+  }
+}
+
+// Runs on every render. Detects whether a new calendar day has begun since
+// the app was last open. If so: any unsaved drafts (a session left mid-way
+// without saving, or a locked day that was being edited but not re-saved)
+// get auto-committed as final data - nothing typed is silently lost. Then
+// the stale active session (if any) gets locked in as before.
+function checkDayRollover() {
+  const d = loadData();
+  const today = todayStr();
+  if (d.lastSeenDate === today) return; // same day as last check, nothing to do
+
+  if (d.drafts) {
+    Object.entries(d.drafts).forEach(([key, draft]) => commitDraftToData(d, key, draft));
+    d.drafts = {};
+  }
+
+  if (d.activeSession && d.activeSession.date !== today) {
+    const p = d.progress || { cycleWeek: 1, daysDone: [] };
+    if (p.cycleWeek === d.activeSession.cycleWeek) {
+      const dd = programDays[d.activeSession.day];
+      const hasAnyData = dd.exercises.some((ex, slot) =>
+        Object.values(d.weights || {}).some(entries =>
+          entries.some(e => !e.reset && e.cycleWeek === p.cycleWeek && e.day === d.activeSession.day && e.slot === slot)));
+      if (hasAnyData && !p.daysDone.includes(d.activeSession.day)) {
+        p.daysDone.push(d.activeSession.day);
+      }
+      d.progress = p;
+    }
+    d.activeSession = null;
+  }
+
+  d.lastSeenDate = today;
+  saveData(d);
+
+  // Any in-progress edit is now finalized - drop back to a clean locked view
+  state.editingLockedSession = false;
+  state.editingExercise = false;
+}
+
+// Status of a day for a GIVEN week (not just current): 'active' (open today),
+// 'locked' (has real logged data - view/edit), or 'not_started'.
+function getDayStatus(day, cycleWeek) {
+  const p = getProgress();
+  if (cycleWeek === undefined) cycleWeek = p.cycleWeek;
+  const s = getActiveSession();
+  if (s && s.day === day && s.cycleWeek === cycleWeek && s.date === todayStr()) return 'active';
+  if (cycleWeek === p.cycleWeek && p.daysDone.includes(day)) return 'locked';
+  const dd = programDays[day];
+  const hasAnyData = dd.exercises.some((ex, slot) => !!findSlotEntry(cycleWeek, day, slot));
+  if (hasAnyData) return 'locked';
+  return 'not_started';
+}
+
+// Quick summary for the week list: how many of the 3 sessions have real data.
+function getWeekDoneCount(cycleWeek) {
+  return dayOrder.filter(day => getDayStatus(day, cycleWeek) === 'locked' || getDayStatus(day, cycleWeek) === 'active').length;
+}
 
 // --- APP STATE ---
 let state = {
   activeTab: 'today',
-  currentWeek: 14,
+  view: 'weekPicker', // weekPicker -> dayPicker -> day -> exercise fullscreen (separate overlay)
+  selectedWeek: null,
   selectedDay: null,
+  editingLockedSession: false, // true once "Edit" tapped on a locked day
   selectedExercise: null,
-  selectedExerciseContext: null, // {dayKey, weekNum, exerciseIndex}
-  programViewWeek: 14,
+  selectedExerciseContext: null, // {day, cycleWeek, slot}
   allExSearch: '',
   historyExercise: null,
-  view: 'weeks',
-  resetWeekNum: null,
-  selectedCardioMachine: null // weeks, days, day
+  // drafts now live in persistent storage (see getDraft/updateDraft/clearDraft), not here
+  swapPickerOpen: false,
+  swapSearch: ''
 };
 
 // --- RENDER ---
 function render() {
+  checkDayRollover();
   const app = document.getElementById('app');
   app.innerHTML = `
     ${renderPage()}
@@ -1489,154 +1903,132 @@ function renderPage() {
 // --- TODAY / ROUTINE PAGE ---
 function renderTodayPage() {
   if (state.view === 'day' && state.selectedDay) return renderDayView();
-  if (state.view === 'days') return renderDaysView();
-  return renderWeeksView();
+  if (state.view === 'dayPicker' && state.selectedWeek) return renderDayPicker();
+  return renderWeekPicker();
 }
 
-function renderWeeksView() {
-  // Check per block — if all weeks in a block are done, reset that block
-  const blocks = {};
-  Object.entries(weekConfigs).forEach(([w, wc]) => {
-    if (!blocks[wc.block]) blocks[wc.block] = [];
-    blocks[wc.block].push(Number(w));
-  });
-  Object.values(blocks).forEach(weekNums => {
-    if (weekNums.every(w => isWeekCompleted(w))) {
-      const d = loadData();
-      if (!d.completedDays) d.completedDays = {};
-      weekNums.forEach(w => delete d.completedDays[w]);
-      saveData(d);
-    }
-  });
+// Which pass through the 4-week template we're currently on, and which
+// absolute week number that cycle started at (e.g. Cycle 3 = weeks 9-12).
+function getCurrentCycleInfo() {
+  const cw = getProgress().cycleWeek;
+  const cycleNumber = Math.floor((cw - 1) / 4) + 1;
+  const cycleStartWeek = (cycleNumber - 1) * 4 + 1;
+  return { cycleNumber, cycleStartWeek };
+}
+
+function renderWeekPicker() {
+  const p = getProgress();
+  const currentWeek = p.cycleWeek;
+  const { cycleNumber, cycleStartWeek } = getCurrentCycleInfo();
 
   return `<div class="page active fade-in">
-    <div class="page-title">Your Program</div>
-    <div class="page-sub">Weeks 14–21 · 2 training blocks</div>
-    ${Object.keys(weekConfigs).map(Number).map((w, i, arr) => {
-      const wc = weekConfigs[w];
-      const completed = isWeekCompleted(w);
-      const nextDay = getNextDay(w);
-      const dayLabels = {mon:'Monday',wed:'Wednesday',thu:'Thursday'};
-      const daysCompleted = ['mon','wed','thu'].filter(dk => isDayCompleted(w, dk)).length;
-      let statusText = '';
-      if (completed) statusText = 'Completed';
-      else if (daysCompleted > 0) statusText = daysCompleted + '/3 days done';
-      const prevW = arr[i-1];
-      const showBlockHeader = i === 0 || (prevW && weekConfigs[prevW].block !== wc.block);
-      return `${showBlockHeader ? '<div class="cat-header" style="margin-top:'+(i===0?'0':'16')+'px">Block '+wc.block+' — Weeks '+w+'–'+(w+3)+'</div>' : ''}
-      <div class="card week-card ${wc.deload?'deload':''} ${completed?'current':''}" data-action="selectWeek" data-week="${w}">
-        <div class="week-num">${w}</div>
-        <div class="week-info">
-          <div class="week-label">${completed?'COMPLETED · ':''}${wc.type === 'A' ? 'A Week' : 'B Week'}${wc.deload?' · DELOAD':''}</div>
-          <div class="week-title">Week ${w}</div>
-          <div class="week-detail">${wc.pct}% intensity · ${wc.deload?'Recovery':'RPE '+wc.rpe}</div>
-          ${statusText ? '<div class="week-detail" style="margin-top:4px;color:var(--accent);font-weight:600">'+statusText+'</div>' : ''}
+    <div class="page-title">Cycle ${cycleNumber} <span style="color:var(--text3);font-weight:500;font-size:16px">· Weeks ${cycleStartWeek}–${cycleStartWeek+3} overall</span></div>
+    <div class="page-sub">The program repeats every 4 weeks — this is where you're up to right now</div>
+    ${Array.from({length: 4}, (_, i) => i + 1).map(templatePos => {
+      const w = cycleStartWeek + templatePos - 1;
+      const variant = variantForWeek(w);
+      const deload = getEffectiveDeload(w);
+      const isCurrent = w === currentWeek;
+      const doneCount = getWeekDoneCount(w);
+      let statusText;
+      if (doneCount === 0) statusText = 'Not started';
+      else if (doneCount === 3) statusText = 'All 3 done';
+      else statusText = doneCount + '/3 done';
+      return `<div class="card week-row ${isCurrent?'current-week':''}" data-action="selectWeek" data-week="${w}">
+        <div class="week-row-left">
+          <div class="week-row-num">${templatePos}</div>
+          <div>
+            <div class="week-row-title">Week ${templatePos}${isCurrent ? ' <span class="current-badge">CURRENT</span>' : ''}</div>
+            <div class="week-row-sub">${variant==='a'?'A':'B'} list${deload?' · Deload':''} · ${statusText} <span style="opacity:0.6">· overall week ${w}</span></div>
+          </div>
         </div>
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
       </div>`;
     }).join('')}
+    ${cycleNumber > 1 ? `<div style="text-align:center;color:var(--text3);font-size:13px;padding:12px 0">You've completed ${cycleNumber - 1} full cycle${cycleNumber-1===1?'':'s'} so far</div>` : ''}
   </div>`;
 }
 
-function renderDaysView() {
-  const w = state.currentWeek;
-  const wc = weekConfigs[w];
-  const overridden = isWeekOverridden(w);
-  const effectiveType = wc.type;
-  const rot = weekSchedule[w];
-  const days = [
-    { key:rot.mon, label:'Monday', dayKey:'mon' },
-    { key:rot.wed, label:'Wednesday', dayKey:'wed' },
-    { key:rot.thu, label:'Thursday', dayKey:'thu' }
-  ];
-  // For reps display, if deload is overridden, use the matching A/B full-rep week
-  const repWeek = (wc.deload && overridden) ? (wc.type === 'B' ? 15 : 14) : w;
-
-  const hasSomeProgress = ['mon','wed','thu'].some(dk => isDayCompleted(w, dk));
+function renderDayPicker() {
+  const cw = state.selectedWeek;
+  const p = getProgress();
+  const isCurrent = cw === p.cycleWeek;
+  const variant = variantForWeek(cw);
+  const natural = isDeloadWeek(cw);
+  const deload = getEffectiveDeload(cw);
+  const canAdvance = isCurrent && canAdvanceWeek();
+  const templatePos = cyclePosForWeek(cw);
+  const cycleNumber = Math.floor((cw - 1) / 4) + 1;
+  const gapDays = daysSinceLastSession();
+  const showGapSuggestion = natural && deload && gapDays !== null && gapDays >= 10;
 
   return `<div class="page active fade-in">
     <div class="back-row" data-action="backToWeeks">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>
       All Weeks
     </div>
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">
-      <div class="page-title" style="margin-bottom:0">Week ${w}</div>
-      ${hasSomeProgress ? '<button class="reset-week-btn" data-action="resetWeek" data-week="'+w+'">Reset Week</button>' : ''}
-    </div>
-    <div class="page-sub">${wc.desc}</div>
-    ${wc.deload ? `
-      <div class="override-toggle">
-        <div class="ot-info">
-          <div class="ot-label">${overridden ? 'Full sets active' : 'Deload week'}</div>
-          <div class="ot-desc">${overridden ? 'Using full sets & reps instead of deload' : 'Toggle on to use full sets & reps'}</div>
-        </div>
-        <button class="toggle-switch ${overridden?'on':''}" data-action="toggleOverride" data-week="${w}"></button>
+    <div class="page-title">Week ${templatePos}${deload ? ' — Deload' : ''}${isCurrent ? ' <span class="current-badge">CURRENT</span>' : ''}</div>
+    <div class="page-sub">Cycle ${cycleNumber} · ${variant === 'a' ? 'A' : 'B'} list${deload ? ' · lighter reps' : ''} <span style="opacity:0.6">· overall week ${cw}</span></div>
+
+    ${natural ? `
+      <div class="deload-control">
+        ${showGapSuggestion ? `<div class="deload-suggestion">It's been ${gapDays} days since your last session — that break already gave you recovery.</div>` : ''}
+        ${deload
+          ? `<button class="deload-toggle-btn" data-action="skipDeload" data-week="${cw}">Skip Deload — Use Normal Reps</button>`
+          : `<div class="deload-skipped-tag">Deload skipped for this week <button data-action="restoreDeload" data-week="${cw}">Undo</button></div>`
+        }
       </div>
     ` : ''}
-    ${(!wc.deload && overridden) ? '' : ''}
-    ${days.map(d => {
-      const dd = dayDefinitions[d.key];
-      const exList = dd.exercises.filter(e => !exercises[effectiveType==='A'?e.a:e.b].isCardio);
-      const dayDone = isDayCompleted(w, d.dayKey);
-      const nextDayKey = getNextDay(w);
-      const isNext = d.dayKey === nextDayKey;
-      const logged = exList.filter(e => {
-        const exId = effectiveType==='A' ? e.a : e.b;
-        const last = getLastWeights(exId, false, false);
-        return last && last.week === w;
-      }).length;
-      return `<div class="card day-card ${dayDone?'completed-day':''} ${isNext?'next-day':''}" data-action="selectDay" data-daykey="${d.key}" data-daylabel="${d.label}">
+
+    ${dayOrder.map(key => {
+      const dd = programDays[key];
+      const status = getDayStatus(key, cw);
+      const statusLabel = status === 'active' ? 'In progress' : status === 'locked' ? 'Done' : 'Not started';
+      return `<div class="card day-card ${status==='locked'?'completed-day':''} ${status==='active'?'next-day':''}" data-action="selectDay" data-daykey="${key}">
         <div class="day-icon ${dd.iconClass}">${dd.icon}</div>
-        <div class="day-focus">${d.label}${dayDone?' — Done':isNext?' — Up Next':''}</div>
-        <div class="day-name">${dd.name}</div>
-        <div class="day-ex-count">${exList.length} exercises + cardio</div>
-        <div class="day-progress"><span class="${dayDone?'done':''}">${logged}/${exList.length}</span></div>
+        <div class="day-focus">${dd.name}</div>
+        <div class="day-name">${statusLabel}</div>
       </div>`;
     }).join('')}
+    ${canAdvance ? `<button class="ef-save-btn" data-action="advanceWeek" style="margin-top:12px">Switch to Week ${cyclePosForWeek(cw+1)} ${cyclePosForWeek(cw+1)===1?'(new cycle) ':''}(${variantForWeek(cw+1)==='a'?'A':'B'}${getEffectiveDeload(cw+1)?' · Deload':''})</button>` : (isCurrent ? `<div style="text-align:center;color:var(--text3);font-size:13px;padding:12px 0">Do at least one session this week to unlock the next</div>` : '')}
   </div>`;
 }
 
 function renderDayView() {
-  const w = state.currentWeek;
-  const wc = weekConfigs[w];
-  const dd = dayDefinitions[state.selectedDay];
-  const weekType = wc.type;
-  const overridden = isWeekOverridden(w);
-  const repWeek = (wc.deload && overridden) ? (wc.type === 'B' ? 15 : 14) : w;
-  // Find which dayKey this is (mon/wed/thu)
-  const rot = weekSchedule[w];
-  let thisDayKey = null;
-  if (rot.mon === state.selectedDay) thisDayKey = 'mon';
-  else if (rot.wed === state.selectedDay) thisDayKey = 'wed';
-  else if (rot.thu === state.selectedDay) thisDayKey = 'thu';
-  // Check if this specific day slot is completed
-  const dayDone = thisDayKey ? isDayCompleted(w, thisDayKey) : false;
+  const day = state.selectedDay;
+  const dd = programDays[day];
+  const cycleWeek = state.selectedWeek;
+  const status = getDayStatus(day, cycleWeek);
+  const editing = status !== 'locked' || state.editingLockedSession;
+  const deload = getEffectiveDeload(cycleWeek);
 
   return `<div class="page active fade-in">
     <div class="back-row" data-action="backToDays">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>
-      Week ${w}
+      Week ${cycleWeek}
     </div>
-    <div class="page-title">${dd.name}</div>
-    <div class="page-sub">${wc.desc}${overridden && wc.deload ? ' · Full sets override' : ''}</div>
-    ${dd.exercises.map((ex, i) => {
-      const exId = weekType === 'A' ? ex.a : ex.b;
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">
+      <div class="page-title" style="margin-bottom:0">${dd.name}</div>
+      ${status === 'locked' && !state.editingLockedSession ? '<button class="reset-week-btn" data-action="editLockedSession">Edit</button>' : ''}
+    </div>
+    <div class="page-sub">${status === 'not_started' ? 'Tap an exercise to start' : status === 'active' ? 'In progress — locks once you come back a different day' : (editing ? 'Editing — Save to lock again' : 'Locked — tap Edit to change')}${deload ? ' · Deload' : ''}</div>
+
+    ${dd.exercises.map((ex, slot) => {
+      const exId = getActualIdForSlot(day, cycleWeek, slot);
       const exData = exercises[exId];
-      const wd = ex.data[repWeek];
-      const todaySaved = !!getTodaysWeights(exId);
       const isCardio = exData.isCardio;
-      return `<div class="ex-list-item ${todaySaved?'completed':''}" data-action="openExercise" data-exid="${exId}" data-exindex="${i}">
-        <div class="ex-check">${todaySaved?'<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>':''}</div>
-        <div class="ex-num">${i+1}</div>
-        <div class="ex-name">${exData.name}</div>
-        <div class="ex-sets-info">${isCardio ? '10 min' : wd.s+'×'+wd.r}</div>
+      const reps = deload ? deloadRepsFor(ex.r) : ex.r;
+      const found = findSlotEntry(cycleWeek, day, slot);
+      const done = !!found;
+      const skipped = status === 'locked' && !done && !state.editingLockedSession;
+      const isSubstituted = exId !== pickVariantId(ex, variantForWeek(cycleWeek));
+      return `<div class="ex-list-item ${done?'completed':''} ${skipped?'skipped-item':''}" data-action="${editing ? 'openExercise' : 'showInfo'}" data-exid="${exId}" data-slot="${slot}" data-day="${day}" data-cycleweek="${cycleWeek}">        <div class="ex-check">${done?'<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>':(skipped?'—':'')}</div>
+        <div class="ex-num">${slot+1}</div>
+        <div class="ex-name">${exData.name}${isSubstituted?' <span class="pr-alt" style="font-size:11px">(swapped)</span>':''}${skipped?' <span style="color:var(--text3);font-size:12px">Skipped</span>':''}</div>
+        <div class="ex-sets-info">${isCardio ? '10 min' : ex.s+'×'+reps}</div>
         <button class="info-btn" data-action="showInfo" data-exid="${exId}">?</button>
       </div>`;
     }).join('')}
-    ${!dayDone && thisDayKey ? `
-      <button class="ef-save-btn" data-action="markDayComplete" data-daykey="${thisDayKey}" style="margin-top:12px">Mark Day Complete</button>
-    ` : dayDone ? `
-      <div style="text-align:center;color:var(--accent);font-size:18px;font-weight:600;padding:20px 0">Day Complete</div>
-    ` : ''}
   </div>`;
 }
 
@@ -1646,36 +2038,41 @@ function renderExerciseFullscreen() {
   const exId = state.selectedExercise;
   const ex = exercises[exId];
   const ctx = state.selectedExerciseContext;
-  const w = state.currentWeek;
-  const dd = ctx ? dayDefinitions[ctx.dayKey] : null;
-  const wc = weekConfigs[w];
-  const weekType = wc.type;
-  const overridden = isWeekOverridden(w);
-  const repWeek = (wc.deload && overridden) ? (wc.type === 'B' ? 15 : 14) : w;
-  const currentIsDeload = wc.deload && !overridden;
-  const exDef = dd ? dd.exercises[ctx.exerciseIndex] : null;
-  const wd = exDef ? exDef.data[repWeek] : {s:3, r:'?'};
+  const dd = ctx ? programDays[ctx.day] : null;
+  const exDef = dd ? dd.exercises[ctx.slot] : null;
+  const deload = ctx ? getEffectiveDeload(ctx.cycleWeek) : false;
+  const reps = exDef ? (deload ? deloadRepsFor(exDef.r) : exDef.r) : '?';
+  const wd = exDef ? { s: exDef.s, r: reps } : { s: 3, r: '?' };
   const numSets = wd.s || 0;
-  // Prev weights: skip deload, exclude today so prev always shows PREVIOUS session
-  const last = getLastWeights(exId, true, true);
+
+  const status = ctx ? getDayStatus(ctx.day, ctx.cycleWeek) : 'not_started';
+  const viewOnly = status === 'locked' && !state.editingLockedSession;
+
+  // Prev weights: most recent OTHER logged entry for this exercise (excluding this exact slot), skip deload
+  const otherEntries = (getWeightLog()[exId] || []).filter(e => !e.reset && !e.deload &&
+    !(ctx && e.cycleWeek === ctx.cycleWeek && e.day === ctx.day && e.slot === ctx.slot))
+    .sort((a,b) => new Date(b.date) - new Date(a.date));
+  const last = otherEntries.length > 0 ? otherEntries[0] : null;
   const prevSets = last ? last.sets : [];
-  // Today's saved entry (if any)
-  const todaysEntry = getTodaysWeights(exId);
-  const savedToday = !!todaysEntry;
-  const todaysSets = todaysEntry ? todaysEntry.sets : [];
+  // This slot's saved entry, if any
+  const slotFound = ctx ? findSlotEntry(ctx.cycleWeek, ctx.day, ctx.slot) : null;
+  const savedHere = !!slotFound;
+  const todaysSets = slotFound ? slotFound.entry.sets : [];
+  // Any unsaved draft (typed but not yet saved) for this exact slot
+  const draft = getDraft(draftKeyFor(ctx));
+  const hasDraft = !!(draft.sets && draft.sets.some(s => s !== undefined && s !== '')) || !!draft.machine || !!draft.duration;
 
   const isCardio = ex.isCardio;
   const isDB = ex.isDB;
+  const isSubstituted = ctx && exDef ? exId !== pickVariantId(exDef, variantForWeek(ctx.cycleWeek)) : false;
 
-  // Nav: find prev/next
-  let prevIdx = null, nextIdx = null;
+  let prevSlot = null, nextSlot = null;
   if (dd && ctx) {
-    if (ctx.exerciseIndex > 0) prevIdx = ctx.exerciseIndex - 1;
-    if (ctx.exerciseIndex < dd.exercises.length - 1) nextIdx = ctx.exerciseIndex + 1;
+    if (ctx.slot > 0) prevSlot = ctx.slot - 1;
+    if (ctx.slot < dd.exercises.length - 1) nextSlot = ctx.slot + 1;
   }
 
-  // Intensity info
-  const rpeText = currentIsDeload ? '50% — Deload' : wc.pct + '% — RPE ' + wc.rpe + ' (' + (10 - wc.rpe) + ' reps in the tank)';
+  const headerTag = ctx ? ('Week ' + ctx.cycleWeek + (deload ? ' · Deload' : '')) : '';
 
   return `<div class="exercise-fullscreen ${state.selectedExercise?'active':''}">
     <div class="ef-header">
@@ -1683,9 +2080,9 @@ function renderExerciseFullscreen() {
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>
       </button>
       <div class="ef-header-info">
-        <div class="ef-exnum">${ctx ? 'Exercise '+(ctx.exerciseIndex+1)+' of '+dd.exercises.length + ' · Week ' + w : ''}</div>
+        <div class="ef-exnum">${ctx ? 'Exercise '+(ctx.slot+1)+' of '+dd.exercises.length + ' · ' + headerTag : ''}</div>
         <div class="ef-exname">${ex.name}</div>
-        <div style="font-size:14px;color:var(--orange);font-weight:500;margin-top:2px">${rpeText}</div>
+        ${isSubstituted ? '<div style="font-size:13px;color:var(--text3);margin-top:2px">Swapped in</div>' : ''}
       </div>
     </div>
     <div class="ef-body">
@@ -1701,29 +2098,33 @@ function renderExerciseFullscreen() {
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
           History
         </button>
+        ${(!viewOnly && !isCardio) ? `<button class="ef-action-btn" data-action="openSwapPicker">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><polyline points="7 23 3 19 7 15"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg>
+          Swap
+        </button>` : ''}
       </div>
 
-      ${isCardio ? (savedToday ? `
+      ${isCardio ? ((savedHere && !hasDraft) ? `
         <div class="ef-section-title">Saved</div>
         <div class="set-row" style="border-color:var(--accent);flex-direction:column;align-items:flex-start;gap:8px">
           <div style="font-size:20px;font-weight:600;color:var(--accent)">${todaysSets[0] || '—'}</div>
           <div style="font-size:18px;color:var(--text2)">${todaysSets[1] || '—'} min</div>
         </div>
-        <div style="text-align:center;color:var(--accent);font-size:16px;font-weight:600;padding:16px 0">Cardio saved for today</div>
-      ` : `
+        ${!viewOnly ? '<button class="ef-save-btn" data-action="editWeights" style="background:var(--surface2);border:1px solid var(--border);color:var(--text)">Edit</button>' : ''}
+      ` : (viewOnly ? '<div style="text-align:center;color:var(--text3);font-size:14px;padding:16px 0">Locked — tap Edit on the session to change</div>' : `
         <div class="ef-section-title">Machine</div>
         <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:20px">
           ${ex.cardioOptions.map(opt => `
-            <button class="cardio-opt" data-action="selectCardio" data-machine="${opt}">${opt}</button>
+            <button class="cardio-opt ${draft.machine===opt?'selected':''}" data-action="selectCardio" data-machine="${opt}">${opt}</button>
           `).join('')}
         </div>
         <div class="ef-section-title">Duration (minutes)</div>
         <div class="set-row">
           <div class="set-label" style="width:auto">Time</div>
-          <input type="number" inputmode="numeric" class="set-input cardio-duration" value="10" placeholder="min" style="max-width:none;flex:1">
+          <input type="number" inputmode="numeric" class="set-input cardio-duration" value="${draft.duration !== undefined ? draft.duration : '10'}" placeholder="min" style="max-width:none;flex:1">
         </div>
         <button class="ef-save-btn" data-action="saveCardio">Save Cardio</button>
-      `) : savedToday && !state.editingExercise ? `
+      `)) : (savedHere && !state.editingExercise && !hasDraft) ? `
         <div class="ef-section-title">Saved · ${wd.s} x ${wd.r}</div>
         <div class="set-header">
           <span class="sh-set">Set</span>
@@ -1754,9 +2155,9 @@ function renderExerciseFullscreen() {
             <div style="flex:1;height:52px;border-radius:12px;background:var(--accent-dim);display:flex;align-items:center;justify-content:center;font-family:'Space Mono',monospace;font-size:28px;font-weight:700;color:var(--accent)">${todayW || '—'}</div>
           </div>`;
         }).join('')}
-        <button class="ef-save-btn" data-action="editWeights" style="background:var(--surface2);border:1px solid var(--border);color:var(--text)">Edit</button>
+        ${!viewOnly ? '<button class="ef-save-btn" data-action="editWeights" style="background:var(--surface2);border:1px solid var(--border);color:var(--text)">Edit</button>' : ''}
       ` : `
-        <div class="ef-section-title">${savedToday ? 'Edit Sets' : 'Log Sets'} · ${wd.s} x ${wd.r}</div>
+        <div class="ef-section-title">${savedHere ? 'Edit Sets' : 'Log Sets'} · ${wd.s} x ${wd.r}</div>
         <div class="set-header">
           <span class="sh-set">Set</span>
           <span class="sh-reps">Reps</span>
@@ -1765,7 +2166,8 @@ function renderExerciseFullscreen() {
         </div>
         ${Array.from({length:numSets}, (_,i) => {
           const prevW = prevSets[i] || '';
-          const prefill = savedToday ? (todaysSets[i] || '') : '';
+          const savedPrefill = savedHere ? (todaysSets[i] || '') : '';
+          const prefill = (draft.sets && draft.sets[i] !== undefined) ? draft.sets[i] : savedPrefill;
           const prevDisplay = isDB && prevW ? prevW.replace(':', ' / ') : prevW;
           if (isDB) {
             const parts = prefill && prefill.includes(':') ? prefill.split(':') : ['',''];
@@ -1790,13 +2192,38 @@ function renderExerciseFullscreen() {
       `}
 
       <div class="ef-nav">
-        <button class="ef-nav-btn" data-action="prevExercise" ${prevIdx===null?'disabled':''}>
+        <button class="ef-nav-btn" data-action="prevExercise" ${prevSlot===null?'disabled':''}>
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>
         </button>
-        <button class="ef-nav-btn" data-action="nextExercise" ${nextIdx===null?'disabled':''}>
+        <button class="ef-nav-btn" data-action="nextExercise" ${nextSlot===null?'disabled':''}>
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
         </button>
       </div>
+    </div>
+  </div>
+  ${state.swapPickerOpen ? renderSwapPicker() : ''}`;
+}
+
+function renderSwapPicker() {
+  const search = state.swapSearch.toLowerCase();
+  const categories = ['Squat Focus','Bench Focus','Deadlift Focus','Upper Focus'];
+  const filtered = Object.entries(exercises).filter(([id, ex]) =>
+    !ex.isCardio && (ex.name.toLowerCase().includes(search) || (ex.standardName && ex.standardName.toLowerCase().includes(search)))
+  );
+  return `<div class="modal-overlay active" id="swapModal" data-action="closeSwapPicker">
+    <div class="modal-sheet" data-modal-sheet="true" style="max-height:80vh;overflow-y:auto">
+      <div class="modal-handle"></div>
+      <div class="modal-title">Swap Exercise</div>
+      <input type="text" class="search-box" placeholder="Search exercises..." value="${state.swapSearch}" data-action="searchSwap" style="margin:12px 0">
+      ${categories.map(cat => {
+        const catEx = filtered.filter(([id,ex]) => ex.category === cat);
+        if (catEx.length === 0) return '';
+        return `<div class="cat-header">${cat}</div>
+          ${catEx.map(([id, ex]) => `<div class="all-ex-item" data-action="chooseSwap" data-exid="${id}">
+            <div class="aex-name">${ex.name}</div>
+          </div>`).join('')}`;
+      }).join('')}
+      <button class="modal-close" data-action="closeSwapPicker">Cancel</button>
     </div>
   </div>`;
 }
@@ -1811,20 +2238,8 @@ function renderModal() {
       <div class="modal-sheet" data-modal-sheet="true">
         <div class="modal-handle"></div>
         <div class="modal-title">Reset All Data?</div>
-        <div class="modal-desc" style="margin-top:8px">This will permanently delete all your logged weights, completed days, and week progress. This cannot be undone. Export a backup first if you want to keep your data.</div>
+        <div class="modal-desc" style="margin-top:8px">This will permanently delete all your logged weights. This cannot be undone. Export a backup first if you want to keep your data.</div>
         <button class="ef-save-btn" data-action="confirmResetAll" style="background:var(--red);margin-top:16px">Delete Everything</button>
-        <button class="modal-close" data-action="closeModal">Cancel</button>
-      </div>
-    </div>`;
-  }
-  if (modalMode === 'confirmReset') {
-    const weekNum = state.resetWeekNum;
-    return `<div class="modal-overlay active" id="modal" data-action="closeModal">
-      <div class="modal-sheet" data-modal-sheet="true">
-        <div class="modal-handle"></div>
-        <div class="modal-title">Reset Week ${weekNum}?</div>
-        <div class="modal-desc" style="margin-top:8px">This will clear all day completion markers for this week. Your exercise weight history will be kept.</div>
-        <button class="ef-save-btn" data-action="confirmResetWeek" style="background:var(--red);margin-top:16px">Reset Week</button>
         <button class="modal-close" data-action="closeModal">Cancel</button>
       </div>
     </div>`;
@@ -1834,17 +2249,21 @@ function renderModal() {
 
   if (modalMode === 'history') {
     const entries = getAllWeights(modalExId);
+    const chartHtml = (!ex.isCardio && entries.length > 0) ? buildWeightChart(entries, ex.isDB) : '';
     return `<div class="modal-overlay active" id="modal" data-action="closeModal">
       <div class="modal-sheet" data-modal-sheet="true">
         <div class="modal-handle"></div>
         <div class="modal-title">${ex.name}</div>
-        <div class="modal-alt">Weight History</div>
+        <div class="modal-alt">History &amp; Progress</div>
+        ${chartHtml ? '<div class="ef-section-title">Progress</div><div class="chart-box">' + chartHtml + '</div>' : ''}
+        <div class="ef-section-title">Log</div>
         ${entries.length === 0 ? '<div class="empty-state"><div class="es-text">No weights logged yet</div></div>' :
           entries.map(e => `<div class="hist-entry">
-            <div class="hist-entry-date">${e.date} · Week ${e.week}</div>
+            <div class="hist-entry-date">${e.date}${entryTagLabel(e) ? " · " + entryTagLabel(e) : ""}</div>
             <div class="hist-entry-sets">${formatSetsHtml(e.sets)}</div>
           </div>`).join('')
         }
+        <button class="modal-close" data-action="showInfo" data-exid="${modalExId}" style="margin-top:8px">← Back to Exercise Info</button>
         <button class="modal-close" data-action="closeModal">Close</button>
       </div>
     </div>`;
@@ -1864,6 +2283,7 @@ function renderModal() {
         <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M23.5 6.2c-.3-1-1-1.8-2-2C19.6 3.6 12 3.6 12 3.6s-7.6 0-9.5.5c-1 .3-1.8 1-2 2C0 8 0 12 0 12s0 4 .5 5.8c.3 1 1 1.8 2 2 1.9.5 9.5.5 9.5.5s7.6 0 9.5-.5c1-.3 1.8-1 2-2 .5-1.8.5-5.8.5-5.8s0-4-.5-5.8zM9.6 15.6V8.4l6.4 3.6-6.4 3.6z"/></svg>
         Watch Video Tutorial
       </a>
+      <button class="modal-close" data-action="showExHistory" data-exid="${modalExId}" style="margin-top:8px">View History &amp; Progress</button>
       <button class="modal-close" data-action="closeModal">Close</button>
     </div>
   </div>`;
@@ -1897,45 +2317,40 @@ function renderExercisesPage() {
 
 // --- PROGRAM PAGE ---
 function renderProgramPage() {
-  const w = state.programViewWeek;
-  const wc = weekConfigs[w];
-  const weekType = wc.type;
-
   return `<div class="page active fade-in">
     <div class="page-title">Full Program</div>
-    <div class="page-sub">Tim's complete program — all days, all exercises</div>
-    <div class="prog-week-header">
-      ${Object.keys(weekConfigs).map(Number).map(wk => `<button class="prog-week-pill ${state.programViewWeek===wk?'active':''}" data-action="progWeek" data-week="${wk}">
-        Wk${wk} ${weekConfigs[wk].deload?'DL':weekConfigs[wk].type}
-      </button>`).join('')}
-    </div>
-    ${Object.entries(dayDefinitions).map(([key, dd]) => `
+    <div class="page-sub">4-week repeating cycle: Week 1 = A, Week 2 = B, Week 3 = A (same reps), Week 4 = B + Deload (reps halved). Then repeats.</div>
+    ${dayOrder.map(key => {
+      const dd = programDays[key];
+      return `
       <div class="prog-section">
-        <div class="prog-day-title">${dd.icon} Day ${dd.dayNum}: ${dd.name}</div>
+        <div class="prog-day-title">${dd.icon} ${dd.name}</div>
         <div class="prog-table">
           <div class="prog-row header">
             <span class="pr-num">#</span>
-            <span class="pr-name">${weekType==='A'?'A Week':'B Week'} Exercise</span>
+            <span class="pr-name">A Week / B Week</span>
             <span class="pr-sets">Sets</span>
-            <span class="pr-reps">Reps</span>
+            <span class="pr-reps">Reps (Deload)</span>
           </div>
           ${dd.exercises.map((ex, i) => {
-            const exId = weekType==='A' ? ex.a : ex.b;
-            const exData = exercises[exId];
-            const wd = ex.data[w];
+            const exDataA = exercises[ex.a];
+            const exDataB = exercises[ex.b];
+            const sameEx = ex.a === ex.b;
+            const deloadR = ex.s ? deloadRepsFor(ex.r) : ex.r;
             return `<div class="prog-row">
               <span class="pr-num">${i+1}</span>
               <span>
-                <span class="pr-name">${exData.name}</span>
-                ${exData.isShoulder ? '<br><span class="pr-alt"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="display:inline-block;vertical-align:middle;width:14px;height:14px;margin-right:3px"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><polyline points="9 12 11 14 15 10"/></svg>Shoulder alt'+(exData.standardName?' for '+exData.standardName:'')+'</span>' : ''}
+                <span class="pr-name">${exDataA.name}${sameEx ? '' : ' / ' + exDataB.name}</span>
+                ${exDataA.isShoulder ? '<br><span class="pr-alt"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="display:inline-block;vertical-align:middle;width:14px;height:14px;margin-right:3px"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><polyline points="9 12 11 14 15 10"/></svg>Shoulder alt'+(exDataA.standardName?' for '+exDataA.standardName:'')+'</span>' : ''}
               </span>
-              <span class="pr-sets">${wd.s||'—'}</span>
-              <span class="pr-reps">${wd.r}</span>
+              <span class="pr-sets">${ex.s||'—'}</span>
+              <span class="pr-reps">${ex.r}${ex.s ? ' ('+deloadR+')' : ''}</span>
             </div>`;
           }).join('')}
         </div>
       </div>
-    `).join('')}
+    `;
+    }).join('')}
   </div>`;
 }
 
@@ -1978,7 +2393,7 @@ function renderHistoryPage() {
       allEntries.map(e => {
         const ex = exercises[e.exId];
         return `<div class="hist-entry" data-action="viewExHistory" data-exid="${e.exId}" style="cursor:pointer">
-          <div class="hist-entry-date">${e.date} · Week ${e.week}</div>
+          <div class="hist-entry-date">${e.date}${entryTagLabel(e) ? " · " + entryTagLabel(e) : ""}</div>
           <div style="font-size:15px;font-weight:600;margin-bottom:4px">${ex?ex.name:e.exId}</div>
           <div class="hist-entry-sets">${formatSetsHtml(e.sets)}</div>
         </div>`;
@@ -2001,7 +2416,7 @@ function renderHistoryExercise() {
     <div class="page-sub">All logged weights for this exercise</div>
     ${entries.length === 0 ? '<div class="empty-state"><div class="es-text">No data yet</div></div>' :
       entries.map(e => `<div class="hist-entry">
-        <div class="hist-entry-date">${e.date} · Week ${e.week}</div>
+        <div class="hist-entry-date">${e.date}${entryTagLabel(e) ? " · " + entryTagLabel(e) : ""}</div>
         <div class="hist-entry-sets">${formatSetsHtml(e.sets)}</div>
       </div>`).join('')
     }
@@ -2011,7 +2426,7 @@ function renderHistoryExercise() {
 // --- CSV EXPORT ---
 function exportCSV() {
   const allWeights = getWeightLog();
-  let csv = 'Exercise,Date,Week,Set 1,Set 1 L,Set 1 R,Set 2,Set 2 L,Set 2 R,Set 3,Set 3 L,Set 3 R,Set 4,Set 4 L,Set 4 R,Type\n';
+  let csv = 'Exercise,Date,Intensity,Set 1,Set 1 L,Set 1 R,Set 2,Set 2 L,Set 2 R,Set 3,Set 3 L,Set 3 R,Set 4,Set 4 L,Set 4 R,Type\n';
   Object.entries(allWeights).forEach(([exId, entries]) => {
     const ex = exercises[exId];
     const name = ex ? ex.name : exId;
@@ -2027,7 +2442,7 @@ function exportCSV() {
           cols.push(val, '', '');
         }
       }
-      csv += `"${name}",${e.date},${e.week},${cols.join(',')},${type}\n`;
+      csv += `"${name}",${e.date},${entryTagLabel(e)},${cols.join(',')},${type}\n`;
     });
   });
   const blob = new Blob([csv], {type:'text/csv'});
@@ -2057,7 +2472,7 @@ function importJSON(file) {
   reader.onload = function(e) {
     try {
       const data = JSON.parse(e.target.result);
-      if (!data.weights && !data.weekOverrides) {
+      if (!data.weights) {
         alert('This file does not appear to be a valid PCYC Gym backup.');
         return;
       }
@@ -2115,31 +2530,60 @@ function handleAction(e) {
 
   switch(action) {
     case 'selectWeek':
-      state.currentWeek = parseInt(el.dataset.week);
-      state.view = 'days';
+      state.selectedWeek = parseInt(el.dataset.week);
+      state.view = 'dayPicker';
       render();
       break;
     case 'backToWeeks':
-      state.view = 'weeks';
+      state.view = 'weekPicker';
+      state.selectedWeek = null;
       state.selectedDay = null;
+      render();
+      break;
+    case 'backToDays':
+      state.view = 'dayPicker';
+      state.selectedDay = null;
+      state.selectedExercise = null;
+      state.editingLockedSession = false;
       render();
       break;
     case 'selectDay':
       state.selectedDay = el.dataset.daykey;
       state.view = 'day';
+      state.editingLockedSession = false;
       render();
       break;
-    case 'backToDays':
-      state.view = 'days';
-      state.selectedDay = null;
-      state.selectedExercise = null;
+    case 'advanceWeek':
+      advanceWeek();
+      state.view = 'weekPicker';
+      state.selectedWeek = null;
       render();
+      break;
+    case 'skipDeload':
+      setDeloadOverride(parseInt(el.dataset.week), false);
+      render();
+      break;
+    case 'restoreDeload':
+      setDeloadOverride(parseInt(el.dataset.week), null);
+      render();
+      break;
+    case 'editLockedSession':
+      state.editingLockedSession = true;
+      render();
+      break;
+    case 'noop':
       break;
     case 'openExercise': {
-      const exId = el.dataset.exid;
-      const idx = parseInt(el.dataset.exindex);
+      const day = el.dataset.day;
+      const slot = parseInt(el.dataset.slot);
+      const cycleWeek = parseInt(el.dataset.cycleweek);
+      // Auto-start the session if this day hasn't been started yet
+      if (getDayStatus(day, cycleWeek) === 'not_started') {
+        startSession(day, cycleWeek);
+      }
+      const exId = getActualIdForSlot(day, cycleWeek, slot);
       state.selectedExercise = exId;
-      state.selectedExerciseContext = { dayKey: state.selectedDay, weekNum: state.currentWeek, exerciseIndex: idx };
+      state.selectedExerciseContext = { day, cycleWeek, slot };
       render();
       break;
     }
@@ -2154,14 +2598,36 @@ function handleAction(e) {
       if (!state.selectedExerciseContext) break;
       state.editingExercise = false;
       const ctx = state.selectedExerciseContext;
-      const dd = dayDefinitions[ctx.dayKey];
-      const wc = weekConfigs[state.currentWeek];
-      const newIdx = action === 'prevExercise' ? ctx.exerciseIndex - 1 : ctx.exerciseIndex + 1;
-      if (newIdx < 0 || newIdx >= dd.exercises.length) break;
-      const exDef = dd.exercises[newIdx];
-      const newExId = wc.type === 'A' ? exDef.a : exDef.b;
+      const dd = programDays[ctx.day];
+      const newSlot = action === 'prevExercise' ? ctx.slot - 1 : ctx.slot + 1;
+      if (newSlot < 0 || newSlot >= dd.exercises.length) break;
+      const newExId = getActualIdForSlot(ctx.day, ctx.cycleWeek, newSlot);
       state.selectedExercise = newExId;
-      state.selectedExerciseContext = { ...ctx, exerciseIndex: newIdx };
+      state.selectedExerciseContext = { ...ctx, slot: newSlot };
+      render();
+      break;
+    }
+    case 'openSwapPicker':
+      state.swapPickerOpen = true;
+      state.swapSearch = '';
+      render();
+      break;
+    case 'closeSwapPicker':
+      state.swapPickerOpen = false;
+      render();
+      break;
+    case 'searchSwap':
+      state.swapSearch = el.value;
+      render();
+      break;
+    case 'chooseSwap': {
+      const newExId = el.dataset.exid;
+      const ctx = state.selectedExerciseContext;
+      if (ctx) {
+        setSubstitution(ctx.cycleWeek, ctx.day, ctx.slot, newExId);
+        state.selectedExercise = newExId;
+      }
+      state.swapPickerOpen = false;
       render();
       break;
     }
@@ -2169,7 +2635,6 @@ function handleAction(e) {
       const ex = exercises[state.selectedExercise];
       let sets = [];
       if (ex && ex.isDB) {
-        // Collect L/R pairs
         const lefts = document.querySelectorAll('.db-left');
         const rights = document.querySelectorAll('.db-right');
         lefts.forEach((inp, i) => {
@@ -2185,21 +2650,11 @@ function handleAction(e) {
       }
       if (sets.some(s => s !== '' && s !== ':')) {
         const today = new Date().toISOString().split('T')[0];
-        const wc = weekConfigs[state.currentWeek];
-        const wasDeload = wc.deload && !isWeekOverridden(state.currentWeek);
-        if (state.editingExercise) {
-          const d = loadData();
-          if (d.weights && d.weights[state.selectedExercise]) {
-            const idx = d.weights[state.selectedExercise].findIndex(e => e.date === today && !e.reset);
-            if (idx !== -1) {
-              d.weights[state.selectedExercise][idx].sets = sets;
-              saveData(d);
-            }
-          }
-          state.editingExercise = false;
-        } else {
-          saveWeights(state.selectedExercise, state.currentWeek, today, sets, wasDeload);
-        }
+        const ctx = state.selectedExerciseContext;
+        const meta = { cycleWeek: ctx.cycleWeek, day: ctx.day, slot: ctx.slot, deload: getEffectiveDeload(ctx.cycleWeek) };
+        saveWeights(state.selectedExercise, meta, today, sets, state.editingExercise || state.editingLockedSession);
+        state.editingExercise = false;
+        clearDraft(draftKeyFor(ctx));
         render();
       }
       break;
@@ -2210,16 +2665,19 @@ function handleAction(e) {
       break;
     }
     case 'selectCardio': {
-      state.selectedCardioMachine = el.dataset.machine;
+      const ctx = state.selectedExerciseContext;
+      const key = draftKeyFor(ctx);
+      updateDraft(key, d => { d.machine = el.dataset.machine; });
       document.querySelectorAll('.cardio-opt').forEach(btn => {
-        btn.classList.toggle('selected', btn.dataset.machine === state.selectedCardioMachine);
+        btn.classList.toggle('selected', btn.dataset.machine === el.dataset.machine);
       });
       break;
     }
     case 'saveCardio': {
-      const machine = state.selectedCardioMachine;
+      const ctx = state.selectedExerciseContext;
+      const key = draftKeyFor(ctx);
+      const machine = getDraft(key).machine;
       if (!machine) {
-        // Flash the machine buttons to indicate selection needed
         document.querySelectorAll('.cardio-opt').forEach(btn => {
           btn.style.borderColor = 'var(--red)';
           setTimeout(() => btn.style.borderColor = '', 500);
@@ -2229,10 +2687,9 @@ function handleAction(e) {
       const duration = document.querySelector('.cardio-duration');
       const mins = duration ? duration.value : '10';
       const today = new Date().toISOString().split('T')[0];
-      const wc = weekConfigs[state.currentWeek];
-      const wasDeload = wc.deload && !isWeekOverridden(state.currentWeek);
-      saveWeights(state.selectedExercise, state.currentWeek, today, [machine, mins], wasDeload);
-      state.selectedCardioMachine = null;
+      const meta = { cycleWeek: ctx.cycleWeek, day: ctx.day, slot: ctx.slot, deload: getEffectiveDeload(ctx.cycleWeek) };
+      saveWeights(state.selectedExercise, meta, today, [machine, mins], state.editingExercise || state.editingLockedSession);
+      clearDraft(key);
       render();
       break;
     }
@@ -2251,55 +2708,8 @@ function handleAction(e) {
     case 'closeModal':
       modalExId = null;
       modalMode = null;
-      state.resetWeekNum = null;
       render();
       break;
-    case 'progWeek':
-      state.programViewWeek = parseInt(el.dataset.week);
-      render();
-      break;
-    case 'toggleOverride': {
-      const weekNum = parseInt(el.dataset.week);
-      setWeekOverride(weekNum, !isWeekOverridden(weekNum));
-      render();
-      break;
-    }
-    case 'markDayComplete': {
-      const dayKey = el.dataset.daykey;
-      markDayCompleted(state.currentWeek, dayKey);
-      render();
-      break;
-    }
-    case 'resetWeek': {
-      modalExId = null;
-      modalMode = 'confirmReset';
-      state.resetWeekNum = parseInt(el.dataset.week);
-      render();
-      break;
-    }
-    case 'confirmResetWeek': {
-      const weekNum = state.resetWeekNum;
-      const d = loadData();
-      // Clear day completion markers
-      if (d.completedDays) {
-        delete d.completedDays[weekNum];
-      }
-      // Flag all weight entries for this week as reset (keeps history but hides from active views)
-      if (d.weights) {
-        Object.keys(d.weights).forEach(exId => {
-          d.weights[exId].forEach(entry => {
-            if (entry.week === weekNum) {
-              entry.reset = true;
-            }
-          });
-        });
-      }
-      saveData(d);
-      modalMode = null;
-      state.resetWeekNum = null;
-      render();
-      break;
-    }
     case 'exportCSV':
       exportCSV();
       break;
@@ -2321,40 +2731,8 @@ function handleAction(e) {
       break;
     case 'openExFromList': {
       const exId = el.dataset.exid;
-      const ex = exercises[exId];
-      if (ex.isCardio) {
-        modalExId = exId;
-        modalMode = 'info';
-      } else {
-        state.selectedExercise = exId;
-        // Find context - pick first matching day/week
-        let found = false;
-        const wc = weekConfigs[state.currentWeek];
-        for (const [dayKey, dd] of Object.entries(dayDefinitions)) {
-          dd.exercises.forEach((exDef, i) => {
-            const thisExId = wc.type === 'A' ? exDef.a : exDef.b;
-            if (thisExId === exId && !found) {
-              state.selectedExerciseContext = { dayKey, weekNum: state.currentWeek, exerciseIndex: i };
-              found = true;
-            }
-          });
-          if (found) break;
-        }
-        if (!found) {
-          // Try other week type
-          const otherType = wc.type === 'A' ? 'B' : 'A';
-          for (const [dayKey, dd] of Object.entries(dayDefinitions)) {
-            dd.exercises.forEach((exDef, i) => {
-              const thisExId = otherType === 'A' ? exDef.a : exDef.b;
-              if (thisExId === exId && !found) {
-                state.selectedExerciseContext = { dayKey, weekNum: state.currentWeek, exerciseIndex: i };
-                found = true;
-              }
-            });
-            if (found) break;
-          }
-        }
-      }
+      modalExId = exId;
+      modalMode = 'info';
       render();
       break;
     }
@@ -2372,9 +2750,41 @@ function handleAction(e) {
 function handleInput(e) {
   if (e.target.dataset.action === 'searchExercises') {
     state.allExSearch = e.target.value;
-    // Debounced re-render of list only
     clearTimeout(handleInput._t);
     handleInput._t = setTimeout(() => render(), 150);
+    return;
+  }
+  if (e.target.dataset.action === 'searchSwap') {
+    state.swapSearch = e.target.value;
+    clearTimeout(handleInput._t2);
+    handleInput._t2 = setTimeout(() => render(), 150);
+    return;
+  }
+  // Weight/cardio inputs on the exercise fullscreen - save into a persisted
+  // draft so navigating away (or even closing the app) before tapping Save
+  // never loses what was typed.
+  const ctx = state.selectedExerciseContext;
+  const key = draftKeyFor(ctx);
+  if (!key) return;
+
+  if (e.target.classList.contains('cardio-duration')) {
+    updateDraft(key, d => { d.duration = e.target.value; });
+  } else if (e.target.classList.contains('db-left') || e.target.classList.contains('db-right')) {
+    const i = parseInt(e.target.dataset.set);
+    const side = e.target.dataset.side;
+    updateDraft(key, d => {
+      if (!d.sets) d.sets = [];
+      const existing = (d.sets[i] || ':').split(':');
+      const l = side === 'L' ? e.target.value : (existing[0] || '');
+      const r = side === 'R' ? e.target.value : (existing[1] || '');
+      d.sets[i] = l + ':' + r;
+    });
+  } else if (e.target.classList.contains('set-input')) {
+    const i = parseInt(e.target.dataset.set);
+    updateDraft(key, d => {
+      if (!d.sets) d.sets = [];
+      d.sets[i] = e.target.value;
+    });
   }
 }
 
