@@ -942,7 +942,7 @@ function saveWeights(exerciseId, meta, date, sets, overwrite) {
   saveData(d);
 }
 function getTodaysWeights(exerciseId) {
-  const today = new Date().toISOString().split('T')[0];
+  const today = todayStr();
   const w = getWeightLog()[exerciseId];
   if (!w) return null;
   return w.find(e => e.date === today && !e.reset) || null;
@@ -950,7 +950,7 @@ function getTodaysWeights(exerciseId) {
 function getLastWeights(exerciseId, skipDeload, excludeToday) {
   const w = getWeightLog()[exerciseId];
   if (!w || w.length === 0) return null;
-  const today = new Date().toISOString().split('T')[0];
+  const today = todayStr();
   let entries = w.filter(e => !e.reset).sort((a,b) => new Date(b.date) - new Date(a.date));
   if (excludeToday) {
     entries = entries.filter(e => e.date !== today);
@@ -1726,7 +1726,13 @@ function setActiveSession(session) {
   d.activeSession = session;
   saveData(d);
 }
-function todayStr() { return new Date().toISOString().split('T')[0]; }
+function todayStr() {
+  const d = new Date();
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return y + '-' + m + '-' + day;
+}
 
 function startSession(day, cycleWeek) {
   setActiveSession({ day, cycleWeek, date: todayStr() });
@@ -2456,7 +2462,7 @@ function exportCSV() {
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;
-  a.download = 'pcyc_gym_log_'+new Date().toISOString().split('T')[0]+'.csv';
+  a.download = 'pcyc_gym_log_'+todayStr()+'.csv';
   a.click();
   URL.revokeObjectURL(url);
 }
@@ -2469,7 +2475,7 @@ function exportJSON() {
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;
-  a.download = 'pcyc_gym_backup_'+new Date().toISOString().split('T')[0]+'.json';
+  a.download = 'pcyc_gym_backup_'+todayStr()+'.json';
   a.click();
   URL.revokeObjectURL(url);
 }
@@ -2656,7 +2662,7 @@ function handleAction(e) {
         });
       }
       if (sets.some(s => s !== '' && s !== ':')) {
-        const today = new Date().toISOString().split('T')[0];
+        const today = todayStr();
         const ctx = state.selectedExerciseContext;
         const meta = { cycleWeek: ctx.cycleWeek, day: ctx.day, slot: ctx.slot, deload: getEffectiveDeload(ctx.cycleWeek) };
         saveWeights(state.selectedExercise, meta, today, sets, state.editingExercise || state.editingLockedSession);
@@ -2693,7 +2699,7 @@ function handleAction(e) {
       }
       const duration = document.querySelector('.cardio-duration');
       const mins = duration ? duration.value : '10';
-      const today = new Date().toISOString().split('T')[0];
+      const today = todayStr();
       const meta = { cycleWeek: ctx.cycleWeek, day: ctx.day, slot: ctx.slot, deload: getEffectiveDeload(ctx.cycleWeek) };
       saveWeights(state.selectedExercise, meta, today, [machine, mins], state.editingExercise || state.editingLockedSession);
       clearDraft(key);
