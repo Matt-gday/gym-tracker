@@ -1670,13 +1670,60 @@ function saveProgress(progress) {
 // A day only "advances" the program once you've done at least one of the 3
 // sessions this cycle-week. Miss a whole week and it just waits for you.
 function canAdvanceWeek() {
-  return getProgress().daysDone.length > 0;
+  const p = getProgress();
+  return p.daysDone.length > 0 || getWeekDoneCount(p.cycleWeek) > 0;
 }
 function advanceWeek() {
   const p = getProgress();
   p.cycleWeek += 1;
   p.daysDone = [];
+  p.weekStart = mondayOf(todayStr());
   saveProgress(p);
+}
+// Manually point "current week" at any week (e.g. to redo or jump ahead).
+function setCurrentWeek(w) {
+  const p = getProgress();
+  p.cycleWeek = w;
+  p.daysDone = [];
+  p.weekStart = mondayOf(todayStr()); // don't let auto-advance undo this until next calendar week
+  saveProgress(p);
+}
+
+// Monday (local) of the calendar week containing a 'YYYY-MM-DD' date.
+function mondayOf(dateStr) {
+  const [y, m, dd] = dateStr.split('-').map(Number);
+  const dt = new Date(y, m - 1, dd);
+  dt.setDate(dt.getDate() - ((dt.getDay() + 6) % 7));
+  return dt.getFullYear() + '-' + String(dt.getMonth() + 1).padStart(2, '0') + '-' + String(dt.getDate()).padStart(2, '0');
+}
+// Latest logged date for a cycle-week in raw data, or null if nothing logged.
+function latestDateForWeek(d, cycleWeek) {
+  let latest = null;
+  Object.values(d.weights || {}).forEach(entries => {
+    entries.forEach(e => {
+      if (e.reset || e.cycleWeek !== cycleWeek) return;
+      if (!latest || e.date > latest) latest = e.date;
+    });
+  });
+  return latest;
+}
+// Once per calendar week (Mon-Sun): if the current program week has any
+// logged session from an earlier calendar week, it's finished, so move on.
+// Keeps moving past any following weeks that are also already finished
+// (catch-up). A week with nothing logged just waits - never skipped.
+function autoAdvanceWeeks(d, today) {
+  const thisMon = mondayOf(today);
+  const p = d.progress || { cycleWeek: 1, daysDone: [] };
+  if (p.weekStart === thisMon) return false;
+  let guard = 0;
+  while (guard++ < 1000) {
+    const latest = latestDateForWeek(d, p.cycleWeek);
+    if (latest && latest < thisMon) { p.cycleWeek += 1; p.daysDone = []; }
+    else break;
+  }
+  p.weekStart = thisMon;
+  d.progress = p;
+  return true;
 }
 
 // Substitutions: which exercise you actually picked for a given cycle-week +
@@ -1813,34 +1860,53 @@ function commitDraftToData(d, key, draft) {
 function checkDayRollover() {
   const d = loadData();
   const today = todayStr();
-  if (d.lastSeenDate === today) return; // same day as last check, nothing to do
+  const newDay = d.lastSeenDate !== today;
 
-  if (d.drafts) {
-    Object.entries(d.drafts).forEach(([key, draft]) => commitDraftToData(d, key, draft));
-    d.drafts = {};
-  }
-
-  if (d.activeSession && d.activeSession.date !== today) {
-    const p = d.progress || { cycleWeek: 1, daysDone: [] };
-    if (p.cycleWeek === d.activeSession.cycleWeek) {
-      const dd = programDays[d.activeSession.day];
-      const hasAnyData = dd.exercises.some((ex, slot) =>
-        Object.values(d.weights || {}).some(entries =>
-          entries.some(e => !e.reset && e.cycleWeek === p.cycleWeek && e.day === d.activeSession.day && e.slot === slot)));
-      if (hasAnyData && !p.daysDone.includes(d.activeSession.day)) {
-        p.daysDone.push(d.activeSession.day);
-      }
-      d.progress = p;
+  if (newDay) {
+    if (d.drafts) {
+      Object.entries(d.drafts).forEach(([key, draft]) => commitDraftToData(d, key, draft));
+      d.drafts = {};
     }
-    d.activeSession = null;
+
+    if (d.activeSession && d.activeSession.date !== today) {
+      const p = d.progress || { cycleWeek: 1, daysDone: [] };
+      if (p.cycleWeek === d.activeSession.cycleWeek) {
+        const dd = programDays[d.activeSession.day];
+        const hasAnyData = dd.exercises.some((ex, slot) =>
+          Object.values(d.weights || {}).some(entries =>
+            entries.some(e => !e.reset && e.cycleWeek === p.cycleWeek && e.day === d.activeSession.day && e.slot === slot)));
+        if (hasAnyData && !p.daysDone.includes(d.activeSession.day)) {
+          p.daysDone.push(d.activeSession.day);
+        }
+        d.progress = p;
+      }
+      d.activeSession = null;
+    }
   }
+
+  // New calendar week (or first run after this feature shipped)? Roll the
+  // program forward past any finished weeks. Runs after drafts are committed
+  // so nothing typed counts as "empty".
+  const advanced = autoAdvanceWeeks(d, today);
+
+  if (!newDay && !advanced) return;
 
   d.lastSeenDate = today;
   saveData(d);
 
+  if (advanced) {
+    state.viewCycle = null;
+    state.view = 'weekPicker';
+    state.selectedWeek = null;
+    state.selectedDay = null;
+    state.selectedExercise = null;
+  }
+
   // Any in-progress edit is now finalized - drop back to a clean locked view
-  state.editingLockedSession = false;
-  state.editingExercise = false;
+  if (newDay) {
+    state.editingLockedSession = false;
+    state.editingExercise = false;
+  }
 }
 
 // Status of a day for a GIVEN week (not just current): 'active' (open today),
@@ -1868,6 +1934,7 @@ let state = {
   view: 'weekPicker', // weekPicker -> dayPicker -> day -> exercise fullscreen (separate overlay)
   selectedWeek: null,
   selectedDay: null,
+  viewCycle: null, // null = follow the current cycle; else a cycle number being browsed
   editingLockedSession: false, // true once "Edit" tapped on a locked day
   selectedExercise: null,
   selectedExerciseContext: null, // {day, cycleWeek, slot}
@@ -1924,19 +1991,28 @@ function renderTodayPage() {
 // absolute week number that cycle started at (e.g. Cycle 3 = weeks 9-12).
 function getCurrentCycleInfo() {
   const cw = getProgress().cycleWeek;
-  const cycleNumber = Math.floor((cw - 1) / 4) + 1;
+  const currentCycle = Math.floor((cw - 1) / 4) + 1;
+  const cycleNumber = Math.max(1, state.viewCycle || currentCycle);
   const cycleStartWeek = (cycleNumber - 1) * 4 + 1;
-  return { cycleNumber, cycleStartWeek };
+  return { cycleNumber, cycleStartWeek, currentCycle };
 }
 
 function renderWeekPicker() {
   const p = getProgress();
   const currentWeek = p.cycleWeek;
-  const { cycleNumber, cycleStartWeek } = getCurrentCycleInfo();
+  const { cycleNumber, cycleStartWeek, currentCycle } = getCurrentCycleInfo();
+  const arrowStyle = 'background:none;border:1px solid var(--border,#333);color:inherit;border-radius:8px;width:34px;height:34px;font-size:18px;line-height:1;';
+  const viewingOther = cycleNumber !== currentCycle;
 
   return `<div class="page active fade-in">
-    <div class="page-title">Cycle ${cycleNumber} <span style="color:var(--text3);font-weight:500;font-size:16px">· Weeks ${cycleStartWeek}–${cycleStartWeek+3} overall</span></div>
-    <div class="page-sub">The program repeats every 4 weeks — this is where you're up to right now</div>
+    <div style="display:flex;align-items:center;justify-content:space-between;gap:8px">
+      <div class="page-title" style="margin-bottom:0">Cycle ${cycleNumber} <span style="color:var(--text3);font-weight:500;font-size:16px">· Weeks ${cycleStartWeek}–${cycleStartWeek+3}</span></div>
+      <div style="display:flex;gap:6px">
+        <button style="${arrowStyle}${cycleNumber<=1?'opacity:0.3;':''}" data-action="prevCycle" ${cycleNumber<=1?'disabled':''}>‹</button>
+        <button style="${arrowStyle}${cycleNumber>=currentCycle+1?'opacity:0.3;':''}" data-action="nextCycle" ${cycleNumber>=currentCycle+1?'disabled':''}>›</button>
+      </div>
+    </div>
+    <div class="page-sub">${viewingOther ? 'Browsing another cycle — tap › ‹ to move, or <a href="#" data-action="backToCurrentCycle" style="color:inherit;text-decoration:underline">jump to current</a>' : 'The program repeats every 4 weeks — this is where you\'re up to right now'}</div>
     ${Array.from({length: 4}, (_, i) => i + 1).map(templatePos => {
       const w = cycleStartWeek + templatePos - 1;
       const variant = variantForWeek(w);
@@ -1958,7 +2034,7 @@ function renderWeekPicker() {
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
       </div>`;
     }).join('')}
-    ${cycleNumber > 1 ? `<div style="text-align:center;color:var(--text3);font-size:13px;padding:12px 0">You've completed ${cycleNumber - 1} full cycle${cycleNumber-1===1?'':'s'} so far</div>` : ''}
+    ${currentCycle > 1 ? `<div style="text-align:center;color:var(--text3);font-size:13px;padding:12px 0">You've completed ${currentCycle - 1} full cycle${currentCycle-1===1?'':'s'} so far</div>` : ''}
   </div>`;
 }
 
@@ -2003,7 +2079,8 @@ function renderDayPicker() {
         <div class="day-name">${statusLabel}</div>
       </div>`;
     }).join('')}
-    ${canAdvance ? `<button class="ef-save-btn" data-action="advanceWeek" style="margin-top:12px">Switch to Week ${cyclePosForWeek(cw+1)} ${cyclePosForWeek(cw+1)===1?'(new cycle) ':''}(${variantForWeek(cw+1)==='a'?'A':'B'}${getEffectiveDeload(cw+1)?' · Deload':''})</button>` : (isCurrent ? `<div style="text-align:center;color:var(--text3);font-size:13px;padding:12px 0">Do at least one session this week to unlock the next</div>` : '')}
+    ${canAdvance ? `<button class="ef-save-btn" data-action="advanceWeek" style="margin-top:12px">Move on to Week ${cyclePosForWeek(cw+1)} ${cyclePosForWeek(cw+1)===1?'(new cycle) ':''}(${variantForWeek(cw+1)==='a'?'A':'B'}${getEffectiveDeload(cw+1)?' · Deload':''})</button>` : (isCurrent ? `<div style="text-align:center;color:var(--text3);font-size:13px;padding:12px 0">Do at least one session this week and it moves on by itself when the next week starts</div>` : '')}
+    ${!isCurrent ? `<button class="ef-save-btn" data-action="setCurrentWeek" data-week="${cw}" style="margin-top:12px">Make this the current week</button>` : ''}
   </div>`;
 }
 
@@ -2570,6 +2647,32 @@ function handleAction(e) {
       advanceWeek();
       state.view = 'weekPicker';
       state.selectedWeek = null;
+      state.viewCycle = null;
+      render();
+      break;
+    case 'setCurrentWeek':
+      setCurrentWeek(parseInt(el.dataset.week));
+      state.view = 'weekPicker';
+      state.selectedWeek = null;
+      state.selectedDay = null;
+      state.viewCycle = null;
+      render();
+      break;
+    case 'prevCycle': {
+      const ci = getCurrentCycleInfo();
+      state.viewCycle = Math.max(1, ci.cycleNumber - 1);
+      render();
+      break;
+    }
+    case 'nextCycle': {
+      const ci = getCurrentCycleInfo();
+      state.viewCycle = ci.cycleNumber + 1;
+      if (state.viewCycle === ci.currentCycle) state.viewCycle = null;
+      render();
+      break;
+    }
+    case 'backToCurrentCycle':
+      state.viewCycle = null;
       render();
       break;
     case 'skipDeload':

@@ -1,4 +1,4 @@
-const CACHE_NAME = 'pcyc-gym-v3';
+const CACHE_NAME = 'pcyc-gym-v4';
 const ASSETS = [
   './',
   './index.html',
