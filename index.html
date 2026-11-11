@@ -433,9 +433,42 @@ body {
 .set-reps {
   font-size:22px;
   color:var(--text2);
-  width:36px;
+  width:44px;
   flex-shrink:0;
+  text-align:center;
+  white-space:nowrap;
 }
+.set-reps small { font-size:11px; margin-left:1px; }
+.set-reps.changed { color:var(--accent); font-weight:700; }
+.reps-stepper {
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  width:44px;
+  flex-shrink:0;
+  color:var(--text2);
+  user-select:none;
+  -webkit-user-select:none;
+}
+.reps-stepper .rep-arrow {
+  width:44px;
+  height:22px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  background:none;
+  border:none;
+  padding:0;
+  color:var(--text3);
+  cursor:pointer;
+  -webkit-tap-highlight-color:transparent;
+}
+.reps-stepper .rep-arrow:active { color:var(--accent); }
+.reps-stepper .rep-arrow svg { width:14px; height:14px; fill:currentColor; }
+.reps-stepper .rep-val { font-size:20px; line-height:22px; white-space:nowrap; }
+.reps-stepper .rep-val small { font-size:10px; margin-left:1px; }
+.reps-stepper .rep-val.changed { color:var(--accent); font-weight:700; }
 .set-prev {
   font-size:22px;
   color:var(--text3);
@@ -476,7 +509,7 @@ body {
   color:var(--text3);
 }
 .set-header .sh-set { width:28px; }
-.set-header .sh-reps { width:36px; }
+.set-header .sh-reps { width:44px; text-align:center; }
 .set-header .sh-prev { width:50px; text-align:center; }
 .set-header .sh-weight { flex:1; text-align:center; }
 
@@ -925,7 +958,38 @@ function getWeightLog() {
   return d.weights || {};
 }
 // Weight saving - saves once per exercise per date+slot, locked after save unless overwrite=true
-function saveWeights(exerciseId, meta, date, sets, overwrite) {
+// --- REPS: actual reps done per set (optional; default = the programmed reps) ---
+// Programmed reps look like '10', '10ea', '1 lap ea'. Stepping changes only the
+// leading number and keeps whatever follows it.
+function splitReps(str) {
+  const m = String(str === undefined || str === null ? '' : str).match(/^(\d+)(.*)$/);
+  return m ? { n: parseInt(m[1], 10), rest: m[2] } : null;
+}
+function stepReps(str, delta) {
+  const p = splitReps(str);
+  if (!p) return str;
+  return Math.max(0, p.n + delta) + p.rest;
+}
+function repsDisplayHtml(str) {
+  const p = splitReps(str);
+  if (!p) return String(str);
+  const rest = p.rest.trim();
+  return p.n + (rest ? '<small>' + rest + '</small>' : '');
+}
+// Keep only the sets where the actual reps differ from the programmed reps.
+// Returns null if nothing differs (so nothing extra is stored).
+function normalizeReps(repsArr, programmed, numSets) {
+  if (!Array.isArray(repsArr)) return null;
+  const out = [];
+  let any = false;
+  for (let i = 0; i < Math.max(numSets || 0, repsArr.length); i++) {
+    const v = repsArr[i];
+    if (v !== undefined && v !== null && v !== '' && String(v) !== String(programmed)) { out.push(String(v)); any = true; }
+    else out.push('');
+  }
+  return any ? out : null;
+}
+function saveWeights(exerciseId, meta, date, sets, overwrite, reps) {
   const d = loadData();
   if (!d.weights) d.weights = {};
   if (!d.weights[exerciseId]) d.weights[exerciseId] = [];
@@ -935,10 +999,13 @@ function saveWeights(exerciseId, meta, date, sets, overwrite) {
     if (!overwrite) return;
     d.weights[exerciseId][existingIdx].sets = sets;
     d.weights[exerciseId][existingIdx].date = date;
+    if (reps) d.weights[exerciseId][existingIdx].reps = reps; else delete d.weights[exerciseId][existingIdx].reps;
     saveData(d);
     return;
   }
-  d.weights[exerciseId].push({ date, sets, cycleWeek: meta.cycleWeek, day: meta.day, slot: meta.slot, deload: !!meta.deload });
+  const newEntry = { date, sets, cycleWeek: meta.cycleWeek, day: meta.day, slot: meta.slot, deload: !!meta.deload };
+  if (reps) newEntry.reps = reps;
+  d.weights[exerciseId].push(newEntry);
   saveData(d);
 }
 function getTodaysWeights(exerciseId) {
@@ -975,7 +1042,7 @@ function entryTagLabel(e) {
   if (e.week) return 'Week ' + e.week; // older Tim-week entries, pre-redesign
   return '';
 }
-function formatSetsHtml(sets) {
+function formatSetsHtml(sets, reps) {
   if (!sets || sets.length === 0) return '';
   // Cardio: first value is a machine name string
   if (sets[0] && isNaN(sets[0]) && !sets[0].includes(':')) {
@@ -985,11 +1052,12 @@ function formatSetsHtml(sets) {
   if (sets[0] && sets[0].includes && sets[0].includes(':')) {
     return sets.map((s,i) => {
       const parts = s.split(':');
-      return '<span class="hist-entry-set">S'+(i+1)+': '+parts[0]+'L / '+parts[1]+'R</span>';
+      const r = reps && reps[i] ? ' × ' + reps[i] : '';
+      return '<span class="hist-entry-set">S'+(i+1)+': '+parts[0]+'L / '+parts[1]+'R'+r+'</span>';
     }).join('');
   }
   // Standard: just kg values
-  return sets.map((s,i) => '<span class="hist-entry-set">S'+(i+1)+': '+s+'kg</span>').join('');
+  return sets.map((s,i) => '<span class="hist-entry-set">S'+(i+1)+': '+s+'kg'+(reps && reps[i] ? ' × ' + reps[i] : '')+'</span>').join('');
 }
 
 // Progress chart for an exercise's history. Tracks your heaviest single set
@@ -1849,13 +1917,18 @@ function commitDraftToData(d, key, draft) {
   if (existingIdx !== -1) {
     // Editing an already-saved entry - keep its original date, just update the values
     d.weights[exId][existingIdx].sets = sets;
+    const r0 = normalizeReps(draft.reps, getRepsForSlot(day, cycleWeek, slot), exDef.s);
+    if (draft.reps !== undefined) { if (r0) d.weights[exId][existingIdx].reps = r0; else delete d.weights[exId][existingIdx].reps; }
   } else {
     // A brand new entry that was never explicitly saved - date it to when it
     // was actually being worked on (the session's date), not "today" (the new day).
     const dateToUse = (d.activeSession && d.activeSession.day === day && d.activeSession.cycleWeek === cycleWeek)
       ? d.activeSession.date
       : (d.lastSeenDate || todayStr());
-    d.weights[exId].push({ date: dateToUse, sets, cycleWeek, day, slot, deload: getEffectiveDeload(cycleWeek) });
+    const ne = { date: dateToUse, sets, cycleWeek, day, slot, deload: getEffectiveDeload(cycleWeek) };
+    const r1 = normalizeReps(draft.reps, getRepsForSlot(day, cycleWeek, slot), exDef.s);
+    if (r1) ne.reps = r1;
+    d.weights[exId].push(ne);
   }
 }
 
@@ -2129,6 +2202,19 @@ function renderDayView() {
   </div>`;
 }
 
+// Small up/down triangles around the reps number so you can record the reps
+// you actually did without touching the programmed target.
+function repsStepperHtml(setIdx, cur, base) {
+  const canStep = splitReps(base) !== null;
+  if (!canStep) return '<div class="set-reps">' + base + '</div>';
+  const tri = dir => '<svg viewBox="0 0 24 24"><path d="' + (dir > 0 ? 'M12 6 L21 18 H3 Z' : 'M12 18 L3 6 H21 Z') + '"/></svg>';
+  return '<div class="reps-stepper">' +
+    '<button type="button" class="rep-arrow" data-action="repStep" data-set="' + setIdx + '" data-dir="1" onmousedown="event.preventDefault()" aria-label="More reps">' + tri(1) + '</button>' +
+    '<div class="rep-val ' + (String(cur) !== String(base) ? 'changed' : '') + '" data-set="' + setIdx + '" data-val="' + cur + '" data-base="' + base + '">' + repsDisplayHtml(cur) + '</div>' +
+    '<button type="button" class="rep-arrow" data-action="repStep" data-set="' + setIdx + '" data-dir="-1" onmousedown="event.preventDefault()" aria-label="Fewer reps">' + tri(-1) + '</button>' +
+    '</div>';
+}
+
 // --- EXERCISE FULLSCREEN ---
 function renderExerciseFullscreen() {
   if (!state.selectedExercise) return '<div class="exercise-fullscreen"></div>';
@@ -2157,7 +2243,9 @@ function renderExerciseFullscreen() {
   const todaysSets = slotFound ? slotFound.entry.sets : [];
   // Any unsaved draft (typed but not yet saved) for this exact slot
   const draft = getDraft(draftKeyFor(ctx));
-  const hasDraft = !!(draft.sets && draft.sets.some(s => s !== undefined && s !== '')) || !!draft.machine || !!draft.duration;
+  const hasDraft = !!(draft.sets && draft.sets.some(s => s !== undefined && s !== '')) || !!draft.machine || !!draft.duration || !!(draft.reps && draft.reps.some(r => r));
+  const savedReps = slotFound && slotFound.entry.reps ? slotFound.entry.reps : [];
+  const curReps = i => (draft.reps && draft.reps[i]) ? draft.reps[i] : (savedReps[i] || wd.r);
 
   const isCardio = ex.isCardio;
   const isDB = ex.isDB;
@@ -2239,7 +2327,7 @@ function renderExerciseFullscreen() {
             const prevParts = prevW && prevW.includes(':') ? prevW.split(':') : null;
             return `<div class="set-row" style="border-color:var(--accent);">
               <div class="set-label" style="color:var(--accent)">${i+1}</div>
-              <div class="set-reps">${wd.r}</div>
+              <div class="set-reps ${savedReps[i] ? 'changed' : ''}">${repsDisplayHtml(savedReps[i] || wd.r)}</div>
               <div class="set-prev">${prevParts ? '<span class="prev-val">'+prevParts[0]+'/'+prevParts[1]+'</span>' : '—'}</div>
               <div style="flex:1;height:48px;border-radius:10px;background:var(--accent-dim);display:flex;align-items:center;justify-content:center;font-family:'Space Mono',monospace;font-size:22px;font-weight:700;color:var(--accent)">${parts[0]}L</div>
               <div style="flex:1;height:48px;border-radius:10px;background:var(--accent-dim);display:flex;align-items:center;justify-content:center;font-family:'Space Mono',monospace;font-size:22px;font-weight:700;color:var(--accent)">${parts[1]}R</div>
@@ -2247,7 +2335,7 @@ function renderExerciseFullscreen() {
           }
           return `<div class="set-row" style="border-color:var(--accent);">
             <div class="set-label">${i+1}</div>
-            <div class="set-reps">${wd.r}</div>
+            <div class="set-reps ${savedReps[i] ? 'changed' : ''}">${repsDisplayHtml(savedReps[i] || wd.r)}</div>
             <div class="set-prev">${prevDisplay ? '<span class="prev-val">'+prevDisplay+'</span>' : '—'}</div>
             <div style="flex:1;height:52px;border-radius:12px;background:var(--accent-dim);display:flex;align-items:center;justify-content:center;font-family:'Space Mono',monospace;font-size:28px;font-weight:700;color:var(--accent)">${todayW || '—'}</div>
           </div>`;
@@ -2271,7 +2359,7 @@ function renderExerciseFullscreen() {
             const prevParts = prevW && prevW.includes(':') ? prevW.split(':') : null;
             return `<div class="set-row">
               <div class="set-label">${i+1}</div>
-              <div class="set-reps">${wd.r}</div>
+              ${repsStepperHtml(i, curReps(i), wd.r)}
               <div class="set-prev">${prevParts ? '<span class="prev-val">'+prevParts[0]+'/'+prevParts[1]+'</span>' : '—'}</div>
               <input type="number" inputmode="decimal" class="set-input db-left" data-set="${i}" data-side="L" value="${parts[0]}" placeholder="L" style="font-size:26px">
               <input type="number" inputmode="decimal" class="set-input db-right" data-set="${i}" data-side="R" value="${parts[1]}" placeholder="R" style="font-size:26px">
@@ -2279,7 +2367,7 @@ function renderExerciseFullscreen() {
           }
           return `<div class="set-row">
             <div class="set-label">${i+1}</div>
-            <div class="set-reps">${wd.r}</div>
+            ${repsStepperHtml(i, curReps(i), wd.r)}
             <div class="set-prev">${prevW ? '<span class="prev-val">'+prevW+'</span>' : '—'}</div>
             <input type="number" inputmode="decimal" class="set-input" data-set="${i}" value="${prefill}" placeholder="kg">
           </div>`;
@@ -2357,7 +2445,7 @@ function renderModal() {
         ${entries.length === 0 ? '<div class="empty-state"><div class="es-text">No weights logged yet</div></div>' :
           entries.map(e => `<div class="hist-entry">
             <div class="hist-entry-date">${e.date}${entryTagLabel(e) ? " · " + entryTagLabel(e) : ""}</div>
-            <div class="hist-entry-sets">${formatSetsHtml(e.sets)}</div>
+            <div class="hist-entry-sets">${formatSetsHtml(e.sets, e.reps)}</div>
           </div>`).join('')
         }
         <button class="modal-close" data-action="showInfo" data-exid="${modalExId}" style="margin-top:8px">← Back to Exercise Info</button>
@@ -2492,7 +2580,7 @@ function renderHistoryPage() {
         return `<div class="hist-entry" data-action="viewExHistory" data-exid="${e.exId}" style="cursor:pointer">
           <div class="hist-entry-date">${e.date}${entryTagLabel(e) ? " · " + entryTagLabel(e) : ""}</div>
           <div style="font-size:15px;font-weight:600;margin-bottom:4px">${ex?ex.name:e.exId}</div>
-          <div class="hist-entry-sets">${formatSetsHtml(e.sets)}</div>
+          <div class="hist-entry-sets">${formatSetsHtml(e.sets, e.reps)}</div>
         </div>`;
       }).join('')
     }
@@ -2514,7 +2602,7 @@ function renderHistoryExercise() {
     ${entries.length === 0 ? '<div class="empty-state"><div class="es-text">No data yet</div></div>' :
       entries.map(e => `<div class="hist-entry">
         <div class="hist-entry-date">${e.date}${entryTagLabel(e) ? " · " + entryTagLabel(e) : ""}</div>
-        <div class="hist-entry-sets">${formatSetsHtml(e.sets)}</div>
+        <div class="hist-entry-sets">${formatSetsHtml(e.sets, e.reps)}</div>
       </div>`).join('')
     }
   </div>`;
@@ -2775,11 +2863,37 @@ function handleAction(e) {
         const today = todayStr();
         const ctx = state.selectedExerciseContext;
         const meta = { cycleWeek: ctx.cycleWeek, day: ctx.day, slot: ctx.slot, deload: getEffectiveDeload(ctx.cycleWeek) };
-        saveWeights(state.selectedExercise, meta, today, sets, state.editingExercise || state.editingLockedSession);
+        const repEls = Array.from(document.querySelectorAll('.rep-val'));
+        let repsArr = null;
+        if (repEls.length) {
+          const base = repEls[0].dataset.base;
+          const raw = [];
+          repEls.forEach(r => { raw[parseInt(r.dataset.set)] = r.dataset.val; });
+          repsArr = normalizeReps(raw, base, sets.length);
+        }
+        saveWeights(state.selectedExercise, meta, today, sets, state.editingExercise || state.editingLockedSession, repsArr);
         state.editingExercise = false;
         clearDraft(draftKeyFor(ctx));
         render();
       }
+      break;
+    }
+    case 'repStep': {
+      const ctx = state.selectedExerciseContext;
+      const key = draftKeyFor(ctx);
+      const i = parseInt(el.dataset.set);
+      const dir = parseInt(el.dataset.dir);
+      const valEl = document.querySelector('.rep-val[data-set="' + i + '"]');
+      if (!valEl || !key) break;
+      const next = stepReps(valEl.dataset.val, dir);
+      valEl.dataset.val = next;
+      valEl.innerHTML = repsDisplayHtml(next);
+      valEl.classList.toggle('changed', String(next) !== String(valEl.dataset.base));
+      updateDraft(key, d => {
+        if (!d.reps) d.reps = [];
+        for (let k = 0; k < i; k++) if (d.reps[k] === undefined) d.reps[k] = '';
+        d.reps[i] = next;
+      });
       break;
     }
     case 'editWeights': {
